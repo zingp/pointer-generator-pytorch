@@ -133,9 +133,9 @@ class Train(object):
 
             if iter_step % 100 == 0:
                 self.summary_writer.flush()
-            print_interval = 10
+            print_interval = 1000
             if iter_step % print_interval == 0:
-                print('steps %d, seconds for %d batch: %.2f , loss: %f' % (iter_step, print_interval,
+                print('steps %d, seconds for %d steps: %.2f , loss: %f' % (iter_step, print_interval,
                                                                            time.time() - start, loss))
                 start = time.time()
             if iter_step % 5000 == 0:
