@@ -124,9 +124,8 @@ class Train(object):
         iter_step, running_avg_loss = self.setup_train(model_file_path)
         start = time.time()
         while iter_step < n_iters:
-            print("step>:", iter_step)
+            # print("step:", iter_step)
             batch = self.batcher.next_batch()
-            print("batch>:",batch)
             loss = self.train_one_batch(batch)
 
             running_avg_loss = calc_running_avg_loss(loss, running_avg_loss, self.summary_writer, iter_step)
@@ -134,7 +133,7 @@ class Train(object):
 
             if iter_step % 100 == 0:
                 self.summary_writer.flush()
-            print_interval = 1000
+            print_interval = 10
             if iter_step % print_interval == 0:
                 print('steps %d, seconds for %d batch: %.2f , loss: %f' % (iter_step, print_interval,
                                                                            time.time() - start, loss))

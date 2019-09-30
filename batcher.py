@@ -92,7 +92,7 @@ class Batch(object):
 
     def init_encoder_seq(self, example_list):
         # Determine the maximum length of the encoder input sequence in this batch
-        print("example_list[0]:", example_list[0], type(example_list[0]))
+        # print("example_list[0]:", example_list[0], type(example_list[0]))
         max_enc_seq_len = max([ex.enc_len for ex in example_list])
 
         # Pad the encoder input sequences up to the length of the longest sequence
@@ -195,7 +195,7 @@ class Batcher(object):
             tf.logging.warning('Bucket input queue is empty when calling next_batch. Bucket queue size: %i, Input queue size: %i', self._batch_queue.qsize(), self._example_queue.qsize())
             if self._single_pass and self._finished_reading:
                 tf.logging.info("Finished reading dataset in single_pass mode.")
-            return None
+                return None
 
         batch = self._batch_queue.get() # get the next Batch
         return batch
@@ -267,12 +267,12 @@ class Batcher(object):
 
     def text_generator(self, example_generator):
         while True:
-            print("type:example generator:", example_generator, type(example_generator))
+            # print("type:example generator:", example_generator, type(example_generator))
             e = example_generator.__next__()     # e is a tf.Example
             try:
                 article_text = e.features.feature['article'].bytes_list.value[0] # the article text was saved under the key 'article' in the data files
                 abstract_text = e.features.feature['abstract'].bytes_list.value[0] # the abstract text was saved under the key 'abstract' in the data files
-                print("text:::", article_text, abstract_text)
+                #print("text:::", article_text, abstract_text)
             except ValueError:
                 tf.logging.error('Failed to get article or abstract from example')
                 continue

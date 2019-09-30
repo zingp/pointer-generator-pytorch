@@ -5,7 +5,10 @@ from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 import config
 from numpy import random
 
-use_cuda = config.use_gpu and torch.cuda.is_available()
+# use_cuda = config.use_gpu and torch.cuda.is_available()
+USE_CUDA = config.use_gpu and torch.cuda.is_available()     # 是否使用GPU
+NUM_CUDA = torch.cuda.device_count() 
+DEVICE = torch.device("cuda:0" if USE_CUDA else 'cpu')
 
 random.seed(123)
 torch.manual_seed(123)
@@ -103,7 +106,7 @@ class Attention(nn.Module):
             coverage_feature = self.W_c(coverage_input)  # B * t_k x 2*hidden_dim
             att_features = att_features + coverage_feature
 
-        e = F.tanh(att_features) # B * t_k x 2*hidden_dim
+        e = torch.tanh(att_features) # B * t_k x 2*hidden_dim
         scores = self.v(e)  # B * t_k x 1
         scores = scores.view(-1, t_k)  # B x t_k
 
@@ -172,7 +175,7 @@ class Decoder(nn.Module):
         if config.pointer_gen:
             p_gen_input = torch.cat((c_t, s_t_hat, x), 1)  # B x (2*2*hidden_dim + emb_dim)
             p_gen = self.p_gen_linear(p_gen_input)
-            p_gen = F.sigmoid(p_gen)
+            p_gen = torch.sigmoid(p_gen)
 
         output = torch.cat((lstm_out.view(-1, config.hidden_dim), c_t), 1) # B x hidden_dim * 3
         output = self.out1(output) # B x hidden_dim
@@ -208,11 +211,14 @@ class Model(object):
             decoder = decoder.eval()
             reduce_state = reduce_state.eval()
 
-        if use_cuda:
-            encoder = encoder.cuda()
-            decoder = decoder.cuda()
-            reduce_state = reduce_state.cuda()
-
+        if USE_CUDA:
+            encoder = encoder.to(DEVICE)
+            decoder = decoder.to(DEVICE)
+            reduce_state = reduce_state.to(DEVICE)
+        #if NUM_CUDA > 1:
+        #    encoder = nn.DataParallel(encoder)
+        #    decoder = nn.DataParallel(decoder)
+        #    reduce_state = nn.DataParallel(reduce_state)
         self.encoder = encoder
         self.decoder = decoder
         self.reduce_state = reduce_state
