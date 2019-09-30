@@ -112,7 +112,7 @@ class Batch(object):
             for j in range(ex.enc_len):
                 self.enc_padding_mask[i][j] = 1
 
-    # For pointer-generator mode, need to store some extra info
+        # For pointer-generator mode, need to store some extra info
         if config.pointer_gen:
             # Determine the max number of in-article OOVs in this batch
             self.max_art_oovs = max([len(ex.article_oovs) for ex in example_list])
@@ -160,7 +160,7 @@ class Batcher(object):
         # Initialize a queue of Batches waiting to be used, and a queue of Examples waiting to be batched
         self._batch_queue = Queue(self.BATCH_QUEUE_MAX)
         self._example_queue = Queue(self.BATCH_QUEUE_MAX * self.batch_size)
-    # Different settings depending on whether we're in single_pass mode or not
+        # Different settings depending on whether we're in single_pass mode or not
         if single_pass:
             self._num_example_q_threads = 1 # just one thread, so we read through the dataset just once
             self._num_batch_q_threads = 1  # just one thread to batch examples
@@ -208,12 +208,12 @@ class Batcher(object):
                 (article, abstract) = input_gen.__next__() # read the next example from file. article and abstract are both strings.
             except StopIteration: # if there are no more examples:
                 tf.logging.info("The example generator for this example queue filling thread has exhausted data.")
-            if self._single_pass:
-                tf.logging.info("single_pass mode is on, so we've finished reading dataset. This thread is stopping.")
-                self._finished_reading = True
-                break
-            else:
-                raise Exception("single_pass mode is off but the example generator is out of data; error.")
+                if self._single_pass:
+                    tf.logging.info("single_pass mode is on, so we've finished reading dataset. This thread is stopping.")
+                    self._finished_reading = True
+                    break
+                else:
+                    raise Exception("single_pass mode is off but the example generator is out of data; error.")
 
             abstract_sentences = [sent.strip() for sent in data.abstract2sents(abstract)] # Use the <s> and </s> tags in abstract to get a list of sentences.
             example = Example(article, abstract_sentences, self._vocab) # Process into an Example.
