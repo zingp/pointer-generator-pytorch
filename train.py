@@ -1,4 +1,9 @@
 import os
+import sys
+
+base_dir = os.path.abspath(os.path.dirname(__file__))
+print(base_dir)
+sys.path.append(base_dir)
 import time
 import argparse
 
@@ -9,10 +14,10 @@ from torch.nn.utils import clip_grad_norm_
 
 from torch.optim import Adagrad
 
-from . import config
-from .batcher import Batcher
-from .data import Vocab
-from .utils import calc_running_avg_loss
+import config
+from batcher import Batcher
+from data import Vocab
+from utils import calc_running_avg_loss
 from train_util import get_input_from_batch, get_output_from_batch
 
 use_cuda = config.use_gpu and torch.cuda.is_available()
