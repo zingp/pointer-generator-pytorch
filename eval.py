@@ -61,12 +61,15 @@ class Evaluate(object):
         batch_avg_loss = sum_step_losses / dec_lens_var
         loss = torch.mean(batch_avg_loss)
 
-        return loss.data[0]
+        return loss.item()
 
     def run_eval(self):
         running_avg_loss, iter = 0, 0
         start = time.time()
         batch = self.batcher.next_batch()
+        #print(batch.original_articles)
+        #print(batch.original_abstracts)
+        #print(batch.original_abstracts_sents)
         while batch is not None:
             loss = self.eval_one_batch(batch)
 
