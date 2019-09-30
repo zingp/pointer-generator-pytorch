@@ -1,8 +1,8 @@
 #Most of this file is copied form https://github.com/abisee/pointer-generator/blob/master/batcher.py
-import Queue
 import time
 from random import shuffle
 from threading import Thread
+from queue import Queue
 
 import numpy as np
 import tensorflow as tf
@@ -92,6 +92,7 @@ class Batch(object):
 
     def init_encoder_seq(self, example_list):
         # Determine the maximum length of the encoder input sequence in this batch
+        print("example_list[0]:", example_list[0], type(example_list[0]))
         max_enc_seq_len = max([ex.enc_len for ex in example_list])
 
         # Pad the encoder input sequences up to the length of the longest sequence
@@ -157,9 +158,8 @@ class Batcher(object):
         self.mode = mode
         self.batch_size = batch_size
         # Initialize a queue of Batches waiting to be used, and a queue of Examples waiting to be batched
-        self._batch_queue = Queue.Queue(self.BATCH_QUEUE_MAX)
-        self._example_queue = Queue.Queue(self.BATCH_QUEUE_MAX * self.batch_size)
-
+        self._batch_queue = Queue(self.BATCH_QUEUE_MAX)
+        self._example_queue = Queue(self.BATCH_QUEUE_MAX * self.batch_size)
     # Different settings depending on whether we're in single_pass mode or not
         if single_pass:
             self._num_example_q_threads = 1 # just one thread, so we read through the dataset just once
@@ -205,7 +205,7 @@ class Batcher(object):
 
         while True:
             try:
-                (article, abstract) = input_gen.next() # read the next example from file. article and abstract are both strings.
+                (article, abstract) = input_gen.__next__() # read the next example from file. article and abstract are both strings.
             except StopIteration: # if there are no more examples:
                 tf.logging.info("The example generator for this example queue filling thread has exhausted data.")
             if self._single_pass:
@@ -267,10 +267,12 @@ class Batcher(object):
 
     def text_generator(self, example_generator):
         while True:
-            e = example_generator.next() # e is a tf.Example
+            print("type:example generator:", example_generator, type(example_generator))
+            e = example_generator.__next__()     # e is a tf.Example
             try:
                 article_text = e.features.feature['article'].bytes_list.value[0] # the article text was saved under the key 'article' in the data files
                 abstract_text = e.features.feature['abstract'].bytes_list.value[0] # the abstract text was saved under the key 'abstract' in the data files
+                print("text:::", article_text, abstract_text)
             except ValueError:
                 tf.logging.error('Failed to get article or abstract from example')
                 continue

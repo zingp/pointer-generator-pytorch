@@ -26,7 +26,7 @@ class Train(object):
     def __init__(self):
         self.vocab = Vocab(config.vocab_path, config.vocab_size)
         self.batcher = Batcher(config.train_data_path, self.vocab, mode='train',
-                               batch_size=config.batch_size, single_pass=False)
+                               batch_size=config.batch_size, single_pass=True)
         time.sleep(15)
 
         train_dir = os.path.join(config.log_root, 'train_%d' % (int(time.time())))
@@ -121,24 +121,26 @@ class Train(object):
         return loss.item()
 
     def trainIters(self, n_iters, model_file_path=None):
-        iter, running_avg_loss = self.setup_train(model_file_path)
+        iter_step, running_avg_loss = self.setup_train(model_file_path)
         start = time.time()
-        while iter < n_iters:
+        while iter_step < n_iters:
+            print("step>:", iter_step)
             batch = self.batcher.next_batch()
+            print("batch>:",batch)
             loss = self.train_one_batch(batch)
 
-            running_avg_loss = calc_running_avg_loss(loss, running_avg_loss, self.summary_writer, iter)
-            iter += 1
+            running_avg_loss = calc_running_avg_loss(loss, running_avg_loss, self.summary_writer, iter_step)
+            iter_step += 1
 
-            if iter % 100 == 0:
+            if iter_step % 100 == 0:
                 self.summary_writer.flush()
             print_interval = 1000
-            if iter % print_interval == 0:
-                print('steps %d, seconds for %d batch: %.2f , loss: %f' % (iter, print_interval,
+            if iter_step % print_interval == 0:
+                print('steps %d, seconds for %d batch: %.2f , loss: %f' % (iter_step, print_interval,
                                                                            time.time() - start, loss))
                 start = time.time()
-            if iter % 5000 == 0:
-                self.save_model(running_avg_loss, iter)
+            if iter_step % 5000 == 0:
+                self.save_model(running_avg_loss, iter_step)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Train script")
