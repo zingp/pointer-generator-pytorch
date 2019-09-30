@@ -1,5 +1,4 @@
 #Most of this file is copied form https://github.com/abisee/pointer-generator/blob/master/batcher.py
-
 import Queue
 import time
 from random import shuffle
@@ -8,8 +7,8 @@ from threading import Thread
 import numpy as np
 import tensorflow as tf
 
-from . import config
-from . import data
+import config
+import data
 
 import random
 random.seed(1234)

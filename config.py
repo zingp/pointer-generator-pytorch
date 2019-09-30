@@ -1,9 +1,7 @@
 import os
 
 root_dir = "/root/liuyouyuan/pyproject/NLP/P007PytorchPointerGeneratorNetwork/cnn-dailymail/finished_files"
-
 #train_data_path = os.path.join(root_dir, "ptr_nw/cnn-dailymail-master/finished_files/train.bin")
-#train_data_path = os.path.join(root_dir, "ptr_nw/cnn-dailymail-master/finished_files/chunked/train_*")
 train_data_path = os.path.join(root_dir, "chunked/train_*")
 eval_data_path = os.path.join(root_dir, "val.bin")
 decode_data_path = os.path.join(root_dir, "test.bin")

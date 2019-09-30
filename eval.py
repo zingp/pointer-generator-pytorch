@@ -5,11 +5,11 @@ import sys
 import tensorflow as tf
 import torch
 
-from . import config
-from .batcher import Batcher
-from .data import Vocab
+import config
+from batcher import Batcher
+from data import Vocab
 
-from .utils import calc_running_avg_loss
+from utils import calc_running_avg_loss
 from train_util import get_input_from_batch, get_output_from_batch
 from model import Model
 

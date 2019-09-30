@@ -7,11 +7,11 @@ import time
 import torch
 from torch.autograd import Variable
 
-from .batcher import Batcher
-from .data import Vocab
-from . import data, config
+import data, config
+from batcher import Batcher
+from data import Vocab
 from model import Model
-from .utils import write_for_rouge, rouge_eval, rouge_log
+from utils import write_for_rouge, rouge_eval, rouge_log
 from train_util import get_input_from_batch
 
 
