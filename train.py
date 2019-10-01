@@ -4,6 +4,7 @@ import sys
 base_dir = os.path.abspath(os.path.dirname(__file__))
 print(base_dir)
 sys.path.append(base_dir)
+
 import time
 import argparse
 
@@ -39,28 +40,32 @@ class Train(object):
 
         self.summary_writer = tf.summary.FileWriter(train_dir)
 
-    def save_model(self, running_avg_loss, iter):
+    def save_model(self, running_avg_loss, iter_step):
+        """保存模型"""
         state = {
-            'iter': iter,
+            'iter': iter_step,
             'encoder_state_dict': self.model.encoder.state_dict(),
             'decoder_state_dict': self.model.decoder.state_dict(),
             'reduce_state_dict': self.model.reduce_state.state_dict(),
             'optimizer': self.optimizer.state_dict(),
             'current_loss': running_avg_loss
         }
-        model_save_path = os.path.join(self.model_dir, 'model_%d_%d' % (iter, int(time.time())))
+        model_save_path = os.path.join(self.model_dir, 'model_%d_%d' % (iter_step, int(time.time())))
         torch.save(state, model_save_path)
 
     def setup_train(self, model_file_path=None):
+        """模型初始化或加载、初始化迭代次数、损失、优化器"""
+        # 初始化模型
         self.model = Model(model_file_path)
-
+        # 模型参数的列表
         params = list(self.model.encoder.parameters()) + list(self.model.decoder.parameters()) + \
                  list(self.model.reduce_state.parameters())
         initial_lr = config.lr_coverage if config.is_coverage else config.lr
+        # 定义优化器
         self.optimizer = Adagrad(params, lr=initial_lr, initial_accumulator_value=config.adagrad_init_acc)
-
+        # 初始化迭代次数和损失
         start_iter, start_loss = 0, 0
-
+        # 如果传入的已存在的模型路径
         if model_file_path is not None:
             state = torch.load(model_file_path, map_location= lambda storage, location: storage)
             start_iter = state['iter']
@@ -77,6 +82,7 @@ class Train(object):
         return start_iter, start_loss
 
     def train_one_batch(self, batch):
+        """训练一个batch，返回该batch的loss"""
         enc_batch, enc_padding_mask, enc_lens, enc_batch_extend_vocab, extra_zeros, c_t_1, coverage = \
             get_input_from_batch(batch, use_cuda)
         dec_batch, dec_padding_mask, max_dec_len, dec_lens_var, target_batch = \
@@ -121,10 +127,12 @@ class Train(object):
         return loss.item()
 
     def trainIters(self, n_iters, model_file_path=None):
+        # 训练设置，包括
         iter_step, running_avg_loss = self.setup_train(model_file_path)
         start = time.time()
         while iter_step < n_iters:
             # print("step:", iter_step)
+            # 获取下一个batch 数据
             batch = self.batcher.next_batch()
             loss = self.train_one_batch(batch)
 
@@ -133,11 +141,13 @@ class Train(object):
 
             if iter_step % 100 == 0:
                 self.summary_writer.flush()
+            # 每1000次迭代打印一次信息
             print_interval = 1000
             if iter_step % print_interval == 0:
                 print('steps %d, seconds for %d steps: %.2f , loss: %f' % (iter_step, print_interval,
                                                                            time.time() - start, loss))
                 start = time.time()
+            # 5000次迭代就保存一下模型
             if iter_step % 5000 == 0:
                 self.save_model(running_avg_loss, iter_step)
 

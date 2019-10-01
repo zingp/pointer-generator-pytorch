@@ -3,7 +3,9 @@ import numpy as np
 import torch
 import config
 
+# 需要看一下batch对象到底是什么？
 def get_input_from_batch(batch, use_cuda):
+    """处理batch为模型的输入数据"""
     batch_size = len(batch.enc_lens)
 
     enc_batch = Variable(torch.from_numpy(batch.enc_batch).long())
