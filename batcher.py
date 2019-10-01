@@ -17,7 +17,7 @@ random.seed(1234)
 class Example(object):
 
     def __init__(self, article, abstract_sentences, vocab):
-    # Get ids of special tokens
+        # Get ids of special tokens
         start_decoding = vocab.word2id(data.START_DECODING)
         stop_decoding = vocab.word2id(data.STOP_DECODING)
 
@@ -149,7 +149,8 @@ class Batch(object):
 
 
 class Batcher(object):
-    BATCH_QUEUE_MAX = 100 # max number of batches the batch_queue can hold
+    # _batch_queue 的队列最大长度
+    BATCH_QUEUE_MAX = 100 
 
     def __init__(self, data_path, vocab, mode, batch_size, single_pass):
         self._data_path = data_path
@@ -174,8 +175,11 @@ class Batcher(object):
         # Start the threads that load the queues
         self._example_q_threads = []
         for _ in range(self._num_example_q_threads):
+            # 这里相当于循环一次
             self._example_q_threads.append(Thread(target=self.fill_example_queue))
+            # 设置为守护线程，只有守护线程都终结，整个python程序才会退出
             self._example_q_threads[-1].daemon = True
+            # 开始执行，相当于调用self.fill_example_queue()
             self._example_q_threads[-1].start()
         self._batch_q_threads = []
         for _ in range(self._num_batch_q_threads):
@@ -190,7 +194,7 @@ class Batcher(object):
             self._watch_thread.start()
 
     def next_batch(self):
-        # If the batch queue is empty, print a warning
+        # 如果_batch_queue队列为空，则打印警告
         if self._batch_queue.qsize() == 0:
             tf.logging.warning('Bucket input queue is empty when calling next_batch. Bucket queue size: %i, Input queue size: %i', self._batch_queue.qsize(), self._example_queue.qsize())
             if self._single_pass and self._finished_reading:
@@ -201,6 +205,7 @@ class Batcher(object):
         return batch
 
     def fill_example_queue(self):
+        # 创建一个生成器对象
         input_gen = self.text_generator(data.example_generator(self._data_path, self._single_pass))
 
         while True:
