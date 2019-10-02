@@ -19,6 +19,12 @@ STOP_DECODING = '[STOP]' # This has a vocab id, which is used at the end of untr
 
 
 class Vocab(object):
+    """
+    vocab_file content(word count):
+            to 5751035
+            a 5100555
+            and 4892247
+    """
 
     def __init__(self, vocab_file, max_size):
         self._word_to_id = {}
@@ -52,16 +58,19 @@ class Vocab(object):
         print("Finished constructing vocabulary of {} total words. Last word added: {}".format(self._count, self._id_to_word[self._count-1]))
 
     def word2id(self, word):
+        """获取单个词语的id"""
         if word not in self._word_to_id:
             return self._word_to_id[UNKNOWN_TOKEN]
         return self._word_to_id[word]
 
     def id2word(self, word_id):
+        """根据id解析出对应的词语"""
         if word_id not in self._id_to_word:
             raise ValueError('Id not found in vocab: %d' % word_id)
         return self._id_to_word[word_id]
 
     def size(self):
+        """获取加上特殊符号后的词汇表数量"""
         return self._count
 
     def write_metadata(self, fpath):
@@ -74,6 +83,7 @@ class Vocab(object):
 
 
 def example_generator(data_path, single_pass):
+    """返回example_pb2.Example"""
     while True:
         filelist = glob.glob(data_path) # get the list of datafiles
         assert filelist, ('Error: Empty filelist at %s' % data_path) # check filelist isn't empty
