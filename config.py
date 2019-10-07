@@ -6,7 +6,7 @@ train_data_path = os.path.join(root_dir, "chunked/train_*")
 eval_data_path = os.path.join(root_dir, "val.bin")
 decode_data_path = os.path.join(root_dir, "test.bin")
 vocab_path = os.path.join(root_dir, "vocab")
-log_root = "./log"
+log_root = "./log_1007"
 
 # Hyperparameters
 hidden_dim= 256

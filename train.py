@@ -144,7 +144,7 @@ class Train(object):
             if iter_step % 100 == 0:
                 self.summary_writer.flush()
             # 每1000次迭代打印一次信息
-            print_interval = 1000
+            print_interval = 100
             if iter_step % print_interval == 0:
                 print('steps %d, seconds for %d steps: %.2f , loss: %f' % (iter_step, print_interval,
                                                                            time.time() - start, loss))
