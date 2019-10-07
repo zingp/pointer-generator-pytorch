@@ -83,7 +83,7 @@ class Vocab(object):
 
 
 def example_generator(data_path, single_pass):
-    """返回example_pb2.Example"""
+    """读取目录下的文件，返回example_pb2.Example"""
     while True:
         filelist = glob.glob(data_path) # get the list of datafiles
         assert filelist, ('Error: Empty filelist at %s' % data_path) # check filelist isn't empty
@@ -111,13 +111,13 @@ def article2ids(article_words, vocab):
     unk_id = vocab.word2id(UNKNOWN_TOKEN)
     for w in article_words:
         i = vocab.word2id(w)
-    if i == unk_id: # If w is OOV
-        if w not in oovs: # Add to list of OOVs
-            oovs.append(w)
-            oov_num = oovs.index(w) # This is 0 for the first article OOV, 1 for the second article OOV...
-            ids.append(vocab.size() + oov_num) # This is e.g. 50000 for the first article OOV, 50001 for the second...
-    else:
-        ids.append(i)
+        if i == unk_id: # If w is OOV
+            if w not in oovs: # Add to list of OOVs
+                oovs.append(w)
+                oov_num = oovs.index(w) # This is 0 for the first article OOV, 1 for the second article OOV...
+                ids.append(vocab.size() + oov_num) # This is e.g. 50000 for the first article OOV, 50001 for the second...
+        else:
+            ids.append(i)
     return ids, oovs
 
 

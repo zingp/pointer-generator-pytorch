@@ -1,4 +1,4 @@
-#Most of this file is copied form https://github.com/abisee/pointer-generator/blob/master/batcher.py
+# Most of this file is copied form https://github.com/abisee/pointer-generator/blob/master/batcher.py
 import time
 from random import shuffle
 from threading import Thread
@@ -21,47 +21,50 @@ class Example(object):
         start_decoding = vocab.word2id(data.START_DECODING)
         stop_decoding = vocab.word2id(data.STOP_DECODING)
 
-        # Process the article
+        # 处理article，如果超过配置文件中的长度，截断。
         article_words = article.split()
         if len(article_words) > config.max_enc_steps:
             article_words = article_words[:config.max_enc_steps]
         self.enc_len = len(article_words) # store the length after truncation but before padding
-        self.enc_input = [vocab.word2id(w) for w in article_words] # list of word ids; OOVs are represented by the id for UNK token
+        # 编码 article，包括oov单词也得跟着编码
+        self.enc_input = [vocab.word2id(w) for w in article_words] 
 
-        # Process the abstract
-        abstract = ' '.join(abstract_sentences) # string
+        # 处理 abstract
+        abstract = ' '.join(abstract_sentences)  # string
         abstract_words = abstract.split() # list of strings
-        abs_ids = [vocab.word2id(w) for w in abstract_words] # list of word ids; OOVs are represented by the id for UNK token
+        # 编码 abstract
+        abs_ids = [vocab.word2id(w) for w in abstract_words] # 
 
-        # Get the decoder input sequence and target sequence
+        # 构建解码阶段的输入序列和输出序列“strat w1 w2”, "w1 w2 end",要一样长
         self.dec_input, self.target = self.get_dec_inp_targ_seqs(abs_ids, config.max_dec_steps, start_decoding, stop_decoding)
         self.dec_len = len(self.dec_input)
 
-        # If using pointer-generator mode, we need to store some extra info
+        # 如果使用pointer-generator模式, 需要一些额外信息
         if config.pointer_gen:
-            # Store a version of the enc_input where in-article OOVs are represented by their temporary OOV id; also store the in-article OOVs words themselves
+            # 编码时需要输入原文编码和oov单词的编码
             self.enc_input_extend_vocab, self.article_oovs = data.article2ids(article_words, vocab)
 
-            # Get a verison of the reference summary where in-article OOVs are represented by their temporary article OOV id
+            # 获取参考摘要的id，其中oov单词由原文中的oov单词编码表示
             abs_ids_extend_vocab = data.abstract2ids(abstract_words, vocab, self.article_oovs)
 
-            # Overwrite decoder target sequence so it uses the temp article OOV ids
+            # 目标编码和处理oov
             _, self.target = self.get_dec_inp_targ_seqs(abs_ids_extend_vocab, config.max_dec_steps, start_decoding, stop_decoding)
 
-        # Store the original strings
+        # 存储原始数据
         self.original_article = article
         self.original_abstract = abstract
+        # 编码前的摘要，单词列表
         self.original_abstract_sents = abstract_sentences
 
 
     def get_dec_inp_targ_seqs(self, sequence, max_len, start_id, stop_id):
         inp = [start_id] + sequence[:]
         target = sequence[:]
-        if len(inp) > max_len: # truncate
+        if len(inp) > max_len:  # 截断
             inp = inp[:max_len]
-            target = target[:max_len] # no end_token
-        else: # no truncation
-            target.append(stop_id) # end token
+            target = target[:max_len] # 没有结束标志
+        else:   # 无截断
+            target.append(stop_id)    # 结束标志
         assert len(inp) == len(target)
         return inp, target
 
@@ -124,7 +127,7 @@ class Batch(object):
                 self.enc_batch_extend_vocab[i, :] = ex.enc_input_extend_vocab[:]
 
     def init_decoder_seq(self, example_list):
-    # Pad the inputs and targets
+        # Pad the inputs and targets
         for ex in example_list:
             ex.pad_decoder_inp_targ(config.max_dec_steps, self.pad_id)
 
@@ -149,7 +152,7 @@ class Batch(object):
 
 
 class Batcher(object):
-    # _batch_queue 的队列最大长度
+    # _batch_queue队列的最大长度
     BATCH_QUEUE_MAX = 100 
 
     def __init__(self, data_path, vocab, mode, batch_size, single_pass):
@@ -158,19 +161,19 @@ class Batcher(object):
         self._single_pass = single_pass
         self.mode = mode
         self.batch_size = batch_size
-        # Initialize a queue of Batches waiting to be used, and a queue of Examples waiting to be batched
+        # 初始化一个存放Batch的队列，和一个存放Examples的队列。后面会用，注意队列的大小关系。
         self._batch_queue = Queue(self.BATCH_QUEUE_MAX)
         self._example_queue = Queue(self.BATCH_QUEUE_MAX * self.batch_size)
-        # Different settings depending on whether we're in single_pass mode or not
+        # 是否使用single_pass模式
         if single_pass:
             self._num_example_q_threads = 1 # just one thread, so we read through the dataset just once
-            self._num_batch_q_threads = 1  # just one thread to batch examples
-            self._bucketing_cache_size = 1 # only load one batch's worth of examples before bucketing; this essentially means no bucketing
-            self._finished_reading = False # this will tell us when we're finished reading the dataset
+            self._num_batch_q_threads = 1   # just one thread to batch examples
+            self._bucketing_cache_size = 1  # only load one batch's worth of examples before bucketing; this essentially means no bucketing
+            self._finished_reading = False  # 这个标志是否已经读完数据，True表示已经读完
         else:
-            self._num_example_q_threads = 1 #16 # num threads to fill example queue
-            self._num_batch_q_threads = 1 #4  # num threads to fill batch queue
-            self._bucketing_cache_size = 1 #100 # how many batches-worth of examples to load into cache before bucketing
+            self._num_example_q_threads = 1  # 16 # num threads to fill example queue
+            self._num_batch_q_threads = 1    #4  # num threads to fill batch queue
+            self._bucketing_cache_size = 1   #100 # how many batches-worth of examples to load into cache before bucketing
 
         # Start the threads that load the queues
         self._example_q_threads = []
@@ -194,7 +197,7 @@ class Batcher(object):
             self._watch_thread.start()
 
     def next_batch(self):
-        # 如果_batch_queue队列为空，则打印警告
+        # 如果_batch_queue队列为空，则打印警告，并返回None，结束训练
         if self._batch_queue.qsize() == 0:
             tf.logging.warning('Bucket input queue is empty when calling next_batch. Bucket queue size: %i, Input queue size: %i', self._batch_queue.qsize(), self._example_queue.qsize())
             if self._single_pass and self._finished_reading:
@@ -220,9 +223,9 @@ class Batcher(object):
                 else:
                     raise Exception("single_pass mode is off but the example generator is out of data; error.")
 
-            abstract_sentences = [sent.strip() for sent in data.abstract2sents(abstract)] # Use the <s> and </s> tags in abstract to get a list of sentences.
-            example = Example(article, abstract_sentences, self._vocab) # Process into an Example.
-            self._example_queue.put(example) # place the Example in the example queue.
+            abstract_sentences = [sent.strip() for sent in data.abstract2sents(abstract)] # 编码abstract
+            example = Example(article, abstract_sentences, self._vocab)  # 处理成一个Example.
+            self._example_queue.put(example)  # 放处理成一个Example对象至example queue.
 
     def fill_batch_queue(self):
         while True:
@@ -273,16 +276,15 @@ class Batcher(object):
     def text_generator(self, example_generator):
         while True:
             # print("type:example generator:", example_generator, type(example_generator))
-            e = example_generator.__next__()     # e is a tf.Example
+            e = example_generator.__next__()     # e 是一个 tf.Example对象
             try:
                 article_text = e.features.feature['article'].bytes_list.value[0] # the article text was saved under the key 'article' in the data files
                 abstract_text = e.features.feature['abstract'].bytes_list.value[0] # the abstract text was saved under the key 'abstract' in the data files
-                #print("text:::", article_text, abstract_text)
             except ValueError:
                 tf.logging.error('Failed to get article or abstract from example')
                 continue
 
-            if len(article_text)==0: # See https://github.com/abisee/pointer-generator/issues/1
+            if len(article_text) == 0: # article 为空的example对象就跳过
                 tf.logging.warning('Found an example with empty article text. Skipping it.')
                 continue
             else:

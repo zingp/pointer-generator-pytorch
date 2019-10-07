@@ -1,6 +1,7 @@
 import os
 import sys
 
+# 添加project目录至环境变量
 base_dir = os.path.abspath(os.path.dirname(__file__))
 print(base_dir)
 sys.path.append(base_dir)
@@ -65,7 +66,7 @@ class Train(object):
         self.optimizer = Adagrad(params, lr=initial_lr, initial_accumulator_value=config.adagrad_init_acc)
         # 初始化迭代次数和损失
         start_iter, start_loss = 0, 0
-        # 如果传入的已存在的模型路径
+        # 如果传入的已存在的模型路径，加载模型继续训练
         if model_file_path is not None:
             state = torch.load(model_file_path, map_location= lambda storage, location: storage)
             start_iter = state['iter']

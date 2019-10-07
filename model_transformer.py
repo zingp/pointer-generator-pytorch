@@ -1,4 +1,4 @@
-#This is still a work in progress I will work on it once I get some free time.
+# This is still a work in progress I will work on it once I get some free time.
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -29,7 +29,7 @@ class MultiHeadedAttention(nn.Module):
     def __init__(self, num_head, d_model, dropout=0.1):
         super(MultiHeadedAttention, self).__init__()
         assert d_model % num_head == 0
-        self.d_k = d_model // num_head  #d_k == d_v
+        self.d_k = d_model // num_head  # d_k == d_v
         self.h = num_head
 
         self.linear_key = nn.Linear(d_model, d_model)
