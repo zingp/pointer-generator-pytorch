@@ -14,7 +14,7 @@ import torch
 from model import Model
 from torch.nn.utils import clip_grad_norm_
 
-from torch.optim import Adagrad
+import torch.optim as optim
 
 import config
 from batcher import Batcher
@@ -51,7 +51,8 @@ class Train(object):
             'optimizer': self.optimizer.state_dict(),
             'current_loss': running_avg_loss
         }
-        model_save_path = os.path.join(self.model_dir, 'model_%d_%d' % (iter_step, int(time.time())))
+        stamp = time.strftime("%Y%m%d_%H%M%S",time.localtime()) 
+        model_save_path = os.path.join(self.model_dir, 'model_{}_{}'.format(iter_step, stamp))
         torch.save(state, model_save_path)
 
     def setup_train(self, model_file_path=None):
@@ -63,7 +64,8 @@ class Train(object):
                  list(self.model.reduce_state.parameters())
         initial_lr = config.lr_coverage if config.is_coverage else config.lr
         # 定义优化器
-        self.optimizer = Adagrad(params, lr=initial_lr, initial_accumulator_value=config.adagrad_init_acc)
+        # self.optimizer = optim.Adagrad(params, lr=initial_lr, initial_accumulator_value=config.adagrad_init_acc)
+        self.optimizer = optim.Adam(params, lr=0.001)
         # 初始化迭代次数和损失
         start_iter, start_loss = 0, 0
         # 如果传入的已存在的模型路径，加载模型继续训练
