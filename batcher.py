@@ -284,7 +284,7 @@ class Batcher(object):
                 tf.logging.error('Failed to get article or abstract from example')
                 continue
 
-            if len(article_text) == 0: # article 为空的example对象就跳过
+            if len(article_text) == 0: # article为空的example对象就跳过
                 tf.logging.warning('Found an example with empty article text. Skipping it.')
                 continue
             else:

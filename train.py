@@ -132,8 +132,7 @@ class Train(object):
         iter_step, running_avg_loss = self.setup_train(model_file_path)
         start = time.time()
         while iter_step < n_iters:
-            # print("step:", iter_step)
-            # 获取下一个batch 数据
+            # 获取下一个batch数据
             batch = self.batcher.next_batch()
             loss = self.train_one_batch(batch)
 

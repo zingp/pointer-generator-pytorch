@@ -42,7 +42,7 @@ class Evaluate(object):
         step_losses = []
         for di in range(min(max_dec_len, config.max_dec_steps)):
             y_t_1 = dec_batch[:, di]  # Teacher forcing
-            final_dist, s_t_1, c_t_1,attn_dist, p_gen, next_coverage = self.model.decoder(y_t_1, s_t_1,
+            final_dist, s_t_1, c_t_1, attn_dist, p_gen, next_coverage = self.model.decoder(y_t_1, s_t_1,
                                                         encoder_outputs, encoder_feature, enc_padding_mask, c_t_1,
                                                         extra_zeros, enc_batch_extend_vocab, coverage, di)
             target = target_batch[:, di]
@@ -64,24 +64,24 @@ class Evaluate(object):
         return loss.item()
 
     def run_eval(self):
-        running_avg_loss, iter = 0, 0
+        running_avg_loss, iter_step = 0, 0
         start = time.time()
         batch = self.batcher.next_batch()
-        #print(batch.original_articles)
-        #print(batch.original_abstracts)
-        #print(batch.original_abstracts_sents)
+        # print(batch.original_articles)
+        # print(batch.original_abstracts)
+        # print(batch.original_abstracts_sents)
         while batch is not None:
             loss = self.eval_one_batch(batch)
 
-            running_avg_loss = calc_running_avg_loss(loss, running_avg_loss, self.summary_writer, iter)
-            iter += 1
+            running_avg_loss = calc_running_avg_loss(loss, running_avg_loss, self.summary_writer, iter_step)
+            iter_step += 1
 
-            if iter % 100 == 0:
+            if iter_step % 100 == 0:
                 self.summary_writer.flush()
             print_interval = 1000
-            if iter % print_interval == 0:
+            if iter_step % print_interval == 0:
                 print('steps %d, seconds for %d batch: %.2f , loss: %f' % (
-                iter, print_interval, time.time() - start, running_avg_loss))
+                iter_step, print_interval, time.time() - start, running_avg_loss))
                 start = time.time()
             batch = self.batcher.next_batch()
 

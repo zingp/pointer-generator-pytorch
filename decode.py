@@ -1,5 +1,6 @@
-#Except for the pytorch part content of this file is copied from https://github.com/abisee/pointer-generator/blob/master/
-
+"""
+decode阶段使用 beam search 算法
+"""
 import os
 import sys
 import time
@@ -100,7 +101,7 @@ class BeamSearch(object):
 
 
     def beam_search(self, batch):
-        #batch should have only one example
+        # batch should have only one example
         enc_batch, enc_padding_mask, enc_lens, enc_batch_extend_vocab, extra_zeros, c_t_0, coverage_t_0 = \
             get_input_from_batch(batch, use_cuda)
 
@@ -111,7 +112,7 @@ class BeamSearch(object):
         dec_h = dec_h.squeeze()
         dec_c = dec_c.squeeze()
 
-        #decoder batch preparation, it has beam_size example initially everything is repeated
+        # decoder batch preparation, it has beam_size example initially everything is repeated
         beams = [Beam(tokens=[self.vocab.word2id(data.START_DECODING)],
                       log_probs=[0.0],
                       state=(dec_h[0], dec_c[0]),
