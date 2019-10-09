@@ -154,11 +154,11 @@ def outputids2words(id_list, vocab, article_oovs):
 
 
 def abstract2sents(abstract):
+    """abstract 是用<s></s>分割的多句话，需要分割成n句话的列表并去掉句子分割符号"""
     cur = 0
     sents = []
     while True:
         try:
-            abstract = str(abstract)
             start_p = abstract.index(SENTENCE_START, cur)
             end_p = abstract.index(SENTENCE_END, start_p + 1)
             cur = end_p + len(SENTENCE_END)

@@ -28,7 +28,6 @@ class Example(object):
         self.enc_len = len(article_words) # store the length after truncation but before padding
         # 编码 article，包括oov单词也得跟着编码
         self.enc_input = [vocab.word2id(w) for w in article_words] 
-
         # 处理 abstract
         abstract = ' '.join(abstract_sentences)  # string
         abstract_words = abstract.split() # list of strings
@@ -214,6 +213,7 @@ class Batcher(object):
         while True:
             try:
                 (article, abstract) = input_gen.__next__() # read the next example from file. article and abstract are both strings.
+                article, abstract = article.decode(), abstract.decode()
             except StopIteration: # if there are no more examples:
                 tf.logging.info("The example generator for this example queue filling thread has exhausted data.")
                 if self._single_pass:
@@ -226,6 +226,21 @@ class Batcher(object):
             abstract_sentences = [sent.strip() for sent in data.abstract2sents(abstract)] # 编码abstract
             example = Example(article, abstract_sentences, self._vocab)  # 处理成一个Example.
             self._example_queue.put(example)  # 放处理成一个Example对象至example queue.
+            """
+            # debug
+            print("*****Example*****")
+            print("="*100)
+            print("Article", example.original_article, type(example.original_article))
+            print("-"*80)
+            print("enc_input:", example.enc_input)
+            print("-"*80)
+            print("Abstract Words", example.original_abstract, type(example.original_abstract))
+            print("-"*80)
+            print("dec_input:", example.dec_input, len(example.dec_input))
+            print("-"*80)
+            print("Target:", example.target, len(example.target))
+            print("="*100)
+            """
 
     def fill_batch_queue(self):
         while True:
