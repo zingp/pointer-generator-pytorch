@@ -64,8 +64,8 @@ class Train(object):
                  list(self.model.reduce_state.parameters())
         initial_lr = config.lr_coverage if config.is_coverage else config.lr
         # 定义优化器
-        # self.optimizer = optim.Adagrad(params, lr=initial_lr, initial_accumulator_value=config.adagrad_init_acc)
-        self.optimizer = optim.Adam(params, lr=0.001)
+        self.optimizer = optim.Adagrad(params, lr=initial_lr, initial_accumulator_value=config.adagrad_init_acc)
+        # self.optimizer = optim.Adam(params, lr=config.adam_lr)
         # 初始化迭代次数和损失
         start_iter, start_loss = 0, 0
         # 如果传入的已存在的模型路径，加载模型继续训练
@@ -144,13 +144,15 @@ class Train(object):
             if iter_step % 100 == 0:
                 self.summary_writer.flush()
             # 每1000次迭代打印一次信息
-            print_interval = 100
-            if iter_step % print_interval == 0:
-                print('steps %d, seconds for %d steps: %.2f , loss: %f' % (iter_step, print_interval,
-                                                                           time.time() - start, loss))
+            # print_interval = 1000
+            if iter_step % 1000 == 0:
+                # lr = self.optimizer.state_dict()['param_groups'][0]['lr']
+                print('steps %d, seconds for %d steps: %.2f, loss: %f' % (iter_step, 1000,
+                                                                          time.time() - start, loss))
                 start = time.time()
             # 5000次迭代就保存一下模型
             if iter_step % 5000 == 0:
+                #print("")
                 self.save_model(running_avg_loss, iter_step)
 
 if __name__ == '__main__':

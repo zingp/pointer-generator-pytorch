@@ -1,17 +1,17 @@
 import os
 
-root_dir = "/root/liuyouyuan/pyproject/NLP/P007PytorchPointerGeneratorNetwork/cnn-dailymail/finished_files"
+root_dir = "/search/odin/liuyouyuan/pyproject/data/finished_files"
 #train_data_path = os.path.join(root_dir, "ptr_nw/cnn-dailymail-master/finished_files/train.bin")
 train_data_path = os.path.join(root_dir, "chunked/train_*")
 eval_data_path = os.path.join(root_dir, "val.bin")
 decode_data_path = os.path.join(root_dir, "test.bin")
 vocab_path = os.path.join(root_dir, "vocab")
-log_root = "./log_1007"
+log_root = "./log"
 
 # Hyperparameters
 hidden_dim= 256
 emb_dim= 128
-batch_size= 8
+batch_size= 16
 max_enc_steps=400
 max_dec_steps=100
 beam_size=4
@@ -19,6 +19,7 @@ min_dec_steps=35
 vocab_size=50_000
 
 lr=0.15
+adam_lr = 0.01    # 使用adam时候的学习率
 adagrad_init_acc=0.1
 rand_unif_init_mag=0.02
 trunc_norm_init_std=1e-4
