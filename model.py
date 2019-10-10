@@ -51,18 +51,18 @@ class Encoder(nn.Module):
 
         self.W_h = nn.Linear(config.hidden_dim * 2, config.hidden_dim * 2, bias=False)
 
-    #seq_lens should be in descending order
-    def forward(self, input, seq_lens):
-        embedded = self.embedding(input)
+    # seq_lens: 1D tensor 应该降序排列
+    def forward(self, input_x, seq_lens):
+        embedded = self.embedding(input_x)
 
         packed = pack_padded_sequence(embedded, seq_lens, batch_first=True)
-        output, hidden = self.lstm(packed)
+        output, hidden = self.lstm(packed)  # hidden is tuple([2, batch, hid_dim], [2, batch, hid_dim])
 
-        encoder_outputs, _ = pad_packed_sequence(output, batch_first=True)  # h dim = B x t_k x n
-        encoder_outputs = encoder_outputs.contiguous()
+        encoder_outputs, _ = pad_packed_sequence(output, batch_first=True)  # [batch, max(seq_lens), 2*hid_dim]
+        encoder_outputs = encoder_outputs.contiguous()                      # [batch, max(seq_lens), 2*hid_dim]
 
-        encoder_feature = encoder_outputs.view(-1, 2*config.hidden_dim)  # B * t_k x 2*hidden_dim
-        encoder_feature = self.W_h(encoder_feature)
+        encoder_feature = encoder_outputs.view(-1, 2*config.hidden_dim)  
+        encoder_feature = self.W_h(encoder_feature)       # [batch*max(seq_lens), 2*hid_dim]
 
         return encoder_outputs, encoder_feature, hidden
 
@@ -76,13 +76,13 @@ class ReduceState(nn.Module):
         init_linear_wt(self.reduce_c)
 
     def forward(self, hidden):
-        h, c = hidden # h, c dim = 2 x b x hidden_dim
-        h_in = h.transpose(0, 1).contiguous().view(-1, config.hidden_dim * 2)
-        hidden_reduced_h = F.relu(self.reduce_h(h_in))
+        h, c = hidden # h, c dim = [2, batch, hidden_dim]
+        h_in = h.transpose(0, 1).contiguous().view(-1, config.hidden_dim * 2)  # [batch, hidden_dim*2]
+        hidden_reduced_h = F.relu(self.reduce_h(h_in))                         # [batch, hidden_dim]
         c_in = c.transpose(0, 1).contiguous().view(-1, config.hidden_dim * 2)
         hidden_reduced_c = F.relu(self.reduce_c(c_in))
 
-        return (hidden_reduced_h.unsqueeze(0), hidden_reduced_c.unsqueeze(0)) # h, c dim = 1 x b x hidden_dim
+        return (hidden_reduced_h.unsqueeze(0), hidden_reduced_c.unsqueeze(0))  # h, c dim = [1, batch, hidden_dim]
 
 class Attention(nn.Module):
     def __init__(self):
