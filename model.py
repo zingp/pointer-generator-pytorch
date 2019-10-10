@@ -94,31 +94,37 @@ class Attention(nn.Module):
         self.v = nn.Linear(config.hidden_dim * 2, 1, bias=False)
 
     def forward(self, s_t_hat, encoder_outputs, encoder_feature, enc_padding_mask, coverage):
-        b, t_k, n = list(encoder_outputs.size())
+        """
+        s_t_hat 是什么？
+        coverage ?
+        enc_padding_mask ?
+        """
+        b, t_k, n = list(encoder_outputs.size())     # [batch, max(seq_lens), 2*hid_dim]
 
-        dec_fea = self.decode_proj(s_t_hat) # B x 2*hidden_dim
-        dec_fea_expanded = dec_fea.unsqueeze(1).expand(b, t_k, n).contiguous() # B x t_k x 2*hidden_dim
-        dec_fea_expanded = dec_fea_expanded.view(-1, n)  # B * t_k x 2*hidden_dim
-
-        att_features = encoder_feature + dec_fea_expanded # B * t_k x 2*hidden_dim
+        dec_fea = self.decode_proj(s_t_hat)          # [B, 2*hid_dim] -> [B, 2*hid_dim]  
+        dec_fea_expanded = dec_fea.unsqueeze(1).expand(b, t_k, n).contiguous()  # [B, t_k, 2*hid_dim]
+        dec_fea_expanded = dec_fea_expanded.view(-1, n)      # [B, t_k, 2*hid_dim]
+        
+        # 相加
+        att_features = encoder_feature + dec_fea_expanded    # [B, t_k, 2*hid_dim]
         if config.is_coverage:
-            coverage_input = coverage.view(-1, 1)  # B * t_k x 1
-            coverage_feature = self.W_c(coverage_input)  # B * t_k x 2*hidden_dim
+            coverage_input = coverage.view(-1, 1)            # [B, t_k, 1]
+            coverage_feature = self.W_c(coverage_input)      # [B, t_k, 2*hid_dim]
             att_features = att_features + coverage_feature
 
-        e = torch.tanh(att_features) # B * t_k x 2*hidden_dim
-        scores = self.v(e)  # B * t_k x 1
-        scores = scores.view(-1, t_k)  # B x t_k
+        e = torch.tanh(att_features)          # [B, t_k, 2*hid_dim]
+        scores = self.v(e)                    # [B, t_k, 1]
+        scores = scores.view(-1, t_k)         # [B, t_k]
 
-        attn_dist_ = F.softmax(scores, dim=1)*enc_padding_mask # B x t_k
+        attn_dist_ = F.softmax(scores, dim=1)*enc_padding_mask    # [B, t_k]
         normalization_factor = attn_dist_.sum(1, keepdim=True)
         attn_dist = attn_dist_ / normalization_factor
 
-        attn_dist = attn_dist.unsqueeze(1)  # B x 1 x t_k
-        c_t = torch.bmm(attn_dist, encoder_outputs)  # B x 1 x n
-        c_t = c_t.view(-1, config.hidden_dim * 2)  # B x 2*hidden_dim
+        attn_dist = attn_dist.unsqueeze(1)           # [B, 1, t_k]
+        c_t = torch.bmm(attn_dist, encoder_outputs)  # [B, 1, 2*hid_dim]
+        c_t = c_t.view(-1, config.hidden_dim * 2)    # [B, 2*hid_dim]
 
-        attn_dist = attn_dist.view(-1, t_k)  # B x t_k
+        attn_dist = attn_dist.view(-1, t_k)          # [B, t_k]
 
         if config.is_coverage:
             coverage = coverage.view(-1, t_k)
@@ -133,7 +139,7 @@ class Decoder(nn.Module):
         # decoder
         self.embedding = nn.Embedding(config.vocab_size, config.emb_dim)
         init_wt_normal(self.embedding.weight)
-
+        # 256+128->128
         self.x_context = nn.Linear(config.hidden_dim * 2 + config.emb_dim, config.emb_dim)
 
         self.lstm = nn.LSTM(config.emb_dim, config.hidden_dim, num_layers=1, batch_first=True, bidirectional=False)
@@ -142,7 +148,7 @@ class Decoder(nn.Module):
         if config.pointer_gen:
             self.p_gen_linear = nn.Linear(config.hidden_dim * 4 + config.emb_dim, 1)
 
-        #p_vocab
+        # p_vocab
         self.out1 = nn.Linear(config.hidden_dim * 3, config.hidden_dim)
         self.out2 = nn.Linear(config.hidden_dim, config.vocab_size)
         init_linear_wt(self.out2)
@@ -215,10 +221,7 @@ class Model(object):
             encoder = encoder.to(DEVICE)
             decoder = decoder.to(DEVICE)
             reduce_state = reduce_state.to(DEVICE)
-        #if NUM_CUDA > 1:
-        #    encoder = nn.DataParallel(encoder)
-        #    decoder = nn.DataParallel(decoder)
-        #    reduce_state = nn.DataParallel(reduce_state)
+        
         self.encoder = encoder
         self.decoder = decoder
         self.reduce_state = reduce_state
