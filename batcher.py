@@ -86,10 +86,11 @@ class Example(object):
 class Batch(object):
     def __init__(self, example_list, vocab, batch_size):
         self.batch_size = batch_size
-        self.pad_id = vocab.word2id(data.PAD_TOKEN) # id of the PAD token used to pad sequences
-        self.init_encoder_seq(example_list) # initialize the input to the encoder
-        self.init_decoder_seq(example_list) # initialize the input and targets for the decoder
-        self.store_orig_strings(example_list) # store the original strings
+        # self.vocab = vocab
+        self.pad_id = vocab.word2id(data.PAD_TOKEN) # PAD token的id
+        self.init_encoder_seq(example_list)         # initialize the input to the encoder
+        self.init_decoder_seq(example_list)         # initialize the input and targets for the decoder
+        self.store_orig_strings(example_list)       # store the original strings
 
 
     def init_encoder_seq(self, example_list):

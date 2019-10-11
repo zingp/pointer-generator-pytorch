@@ -85,20 +85,69 @@ class Train(object):
         return start_iter, start_loss
 
     def train_one_batch(self, batch):
-        """训练一个batch，返回该batch的loss"""
+        """
+        训练一个batch，返回该batch的loss。
+        enc_batch:             torch.Size([16, 400]), 16篇文章的编码，不足400词的用pad的编码补足, oov词汇用0编码；
+        enc_padding_mask:      torch.Size([16, 400]), 对应pad的位置为0，其余为1；
+        enc_lens:              numpy.ndarray, 列表内每个元素表示每篇article的单词数；
+        enc_batch_extend_vocab:torch.Size([16, 400]), 16篇文章的编码;oov词汇用超过词汇表的编码；
+        extra_zeros:           torch.Size([16, 文章oov词汇数量]) zero tensor;
+        c_t_1:                 torch.Size([16, 512]) zero tensor;
+        coverage:              是否coverage。
+        ----------------------------------------
+        
+        """
         enc_batch, enc_padding_mask, enc_lens, enc_batch_extend_vocab, extra_zeros, c_t_1, coverage = \
             get_input_from_batch(batch, use_cuda)
         dec_batch, dec_padding_mask, max_dec_len, dec_lens_var, target_batch = \
             get_output_from_batch(batch, use_cuda)
-
         self.optimizer.zero_grad()
-
+        """
+        print("模型输入文章编码:", "*"*100)
+        print("enc_batch:", enc_batch, enc_batch.size())
+        print("enc_batch[-1]:", enc_batch[-1])
+        # print("batch._id_to_word:", batch.vocab._id_to_word)
+        print("enc_batch[-1]原文:", [batch.vocab.id2word(idx) for idx in enc_batch[-1].cpu().numpy()])
+        print("-"*50)
+        print("enc_padding_mask:", enc_padding_mask, enc_padding_mask.size())
+        print("-"*50)
+        print("enc_lens:", enc_lens, enc_lens.shape)
+        print("-"*50)
+        print("enc_batch_extend_vocab", enc_batch_extend_vocab, enc_batch_extend_vocab.size())
+        print("enc_batch_extend_vocab[-1]:", enc_batch_extend_vocab[-1])
+        print("enc_batch_extend_vocab[-1]的原文:", [batch.vocab.id2word(idx) if idx<50000 else '[UNK]+{}'.format(idx-50000) for idx in enc_batch_extend_vocab[-1].cpu().numpy()])
+        print("-"*50)
+        print("extra_zeros:", extra_zeros, extra_zeros.size())
+        print("-"*50)
+        print("c_t_1:", c_t_1, c_t_1.size())
+        print("-"*50)
+        print("coverage:", coverage)
+        print("*"*100)
+        """
+        print("模型输入摘要编码，包括源和目标：", "*"*100)
+        print("dec_batch:", dec_batch, dec_batch.size())
+        print("dec_batch[-1]:", dec_batch[-1])
+        # print("batch._id_to_word:", batch.vocab._id_to_word)
+        print("dec_batch[-1]原文:", [batch.vocab.id2word(idx) for idx in dec_batch[-1].cpu().numpy()])
+        print("-"*50)
+        print("dec_padding_mask:", dec_padding_mask, dec_padding_mask.size())
+        print("-"*50)
+        print("max_dec_len:", max_dec_len)
+        print("-"*50)
+        print("dec_lens_var", dec_lens_var, type(dec_lens_var))
+        print("-"*50)
+        print("target_batch:", target_batch, target_batch.size())
+        print("-"*50)
+        print("target_batch[-1]:", target_batch[-1], target_batch[-1].size())
+        print("target_batch[-1]的原文:", [batch.vocab.id2word(idx) for idx in target_batch[-1].cpu().numpy()])
+        print("*"*100)
+        input("任意键继续>>>")
         encoder_outputs, encoder_feature, encoder_hidden = self.model.encoder(enc_batch, enc_lens)
+        # print("reduce_state 输入：", type(encoder_hidden), len(encoder_hidden), encoder_hidden[0].size())
         s_t_1 = self.model.reduce_state(encoder_hidden)
-
         step_losses = []
         for di in range(min(max_dec_len, config.max_dec_steps)):
-            y_t_1 = dec_batch[:, di]  # Teacher forcing
+            y_t_1 = dec_batch[:, di]      # Teacher forcing
             final_dist, s_t_1,  c_t_1, attn_dist, p_gen, next_coverage = self.model.decoder(y_t_1, s_t_1,
                                                         encoder_outputs, encoder_feature, enc_padding_mask, c_t_1,
                                                         extra_zeros, enc_batch_extend_vocab,
@@ -136,6 +185,9 @@ class Train(object):
         while iter_step < n_iters:
             # 获取下一个batch数据
             batch = self.batcher.next_batch()
+            #print("batch:", "*"*30)
+            #print("enc_batch", batch.enc_batch)
+            #print("enc_padding_mask", batch.enc_padding_mask)
             loss = self.train_one_batch(batch)
 
             running_avg_loss = calc_running_avg_loss(loss, running_avg_loss, self.summary_writer, iter_step)
@@ -152,7 +204,6 @@ class Train(object):
                 start = time.time()
             # 5000次迭代就保存一下模型
             if iter_step % 5000 == 0:
-                #print("")
                 self.save_model(running_avg_loss, iter_step)
 
 if __name__ == '__main__':
