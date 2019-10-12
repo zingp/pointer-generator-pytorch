@@ -106,13 +106,14 @@ def example_generator(data_path, single_pass):
 
 
 def article2ids(article_words, vocab):
+    """返回两个列表：将文章的词汇转换为id,包含oov词汇id; oov词汇"""
     ids = []
     oovs = []
     unk_id = vocab.word2id(UNKNOWN_TOKEN)
     for w in article_words:
         i = vocab.word2id(w)
-        if i == unk_id: # If w is OOV
-            if w not in oovs: # Add to list of OOVs
+        if i == unk_id:         # If w is OOV
+            if w not in oovs:   # Add to list of OOVs
                 oovs.append(w)
                 oov_num = oovs.index(w) # This is 0 for the first article OOV, 1 for the second article OOV...
                 ids.append(vocab.size() + oov_num) # This is e.g. 50000 for the first article OOV, 50001 for the second...

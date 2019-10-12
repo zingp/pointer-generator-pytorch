@@ -6,6 +6,7 @@ import tensorflow as tf
 import torch
 
 import config
+from config import USE_CUDA, DEVICE
 from batcher import Batcher
 from data import Vocab
 
@@ -13,13 +14,11 @@ from utils import calc_running_avg_loss
 from train_util import get_input_from_batch, get_output_from_batch
 from model import Model
 
-use_cuda = config.use_gpu and torch.cuda.is_available()
-
 class Evaluate(object):
     def __init__(self, model_file_path):
         self.vocab = Vocab(config.vocab_path, config.vocab_size)
         self.batcher = Batcher(config.eval_data_path, self.vocab, mode='eval',
-                               batch_size=config.batch_size, single_pass=True)
+                               batch_size=config.batch_size, single_pass=False)
         time.sleep(15)
         model_name = os.path.basename(model_file_path)
 
@@ -32,9 +31,9 @@ class Evaluate(object):
 
     def eval_one_batch(self, batch):
         enc_batch, enc_padding_mask, enc_lens, enc_batch_extend_vocab, extra_zeros, c_t_1, coverage = \
-            get_input_from_batch(batch, use_cuda)
+            get_input_from_batch(batch, USE_CUDA)
         dec_batch, dec_padding_mask, max_dec_len, dec_lens_var, target_batch = \
-            get_output_from_batch(batch, use_cuda)
+            get_output_from_batch(batch, USE_CUDA)
 
         encoder_outputs, encoder_feature, encoder_hidden = self.model.encoder(enc_batch, enc_lens)
         s_t_1 = self.model.reduce_state(encoder_hidden)

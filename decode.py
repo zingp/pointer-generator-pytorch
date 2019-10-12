@@ -9,14 +9,13 @@ import torch
 from torch.autograd import Variable
 
 import data, config
+from config import USE_CUDA, DEVICE
 from batcher import Batcher
 from data import Vocab
 from model import Model
 from utils import write_for_rouge, rouge_eval, rouge_log
 from train_util import get_input_from_batch
 
-
-use_cuda = config.use_gpu and torch.cuda.is_available()
 
 class Beam(object):
     def __init__(self, tokens, log_probs, state, context, coverage):
@@ -48,6 +47,7 @@ class BeamSearch(object):
         self._decode_dir = os.path.join(config.log_root, 'decode_%s' % (model_name))
         self._rouge_ref_dir = os.path.join(self._decode_dir, 'rouge_ref')
         self._rouge_dec_dir = os.path.join(self._decode_dir, 'rouge_dec_dir')
+        # 创建3个目录
         for p in [self._decode_dir, self._rouge_ref_dir, self._rouge_dec_dir]:
             if not os.path.exists(p):
                 os.mkdir(p)
@@ -103,7 +103,7 @@ class BeamSearch(object):
     def beam_search(self, batch):
         # batch should have only one example
         enc_batch, enc_padding_mask, enc_lens, enc_batch_extend_vocab, extra_zeros, c_t_0, coverage_t_0 = \
-            get_input_from_batch(batch, use_cuda)
+            get_input_from_batch(batch, USE_CUDA)
 
         encoder_outputs, encoder_feature, encoder_hidden = self.model.encoder(enc_batch, enc_lens)
         s_t_0 = self.model.reduce_state(encoder_hidden)
@@ -126,8 +126,8 @@ class BeamSearch(object):
             latest_tokens = [t if t < self.vocab.size() else self.vocab.word2id(data.UNKNOWN_TOKEN) \
                              for t in latest_tokens]
             y_t_1 = Variable(torch.LongTensor(latest_tokens))
-            if use_cuda:
-                y_t_1 = y_t_1.cuda()
+            if USE_CUDA:
+                y_t_1 = y_t_1.to(DEVICE)
             all_state_h =[]
             all_state_c = []
 

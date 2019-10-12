@@ -13,16 +13,15 @@ import tensorflow as tf
 import torch
 from model import Model
 from torch.nn.utils import clip_grad_norm_
-
 import torch.optim as optim
 
 import config
+from config import USE_CUDA, DEVICE
 from batcher import Batcher
 from data import Vocab
 from utils import calc_running_avg_loss
 from train_util import get_input_from_batch, get_output_from_batch
 
-use_cuda = config.use_gpu and torch.cuda.is_available()
 
 class Train(object):
     def __init__(self):
@@ -64,8 +63,8 @@ class Train(object):
                  list(self.model.reduce_state.parameters())
         initial_lr = config.lr_coverage if config.is_coverage else config.lr
         # 定义优化器
-        self.optimizer = optim.Adagrad(params, lr=initial_lr, initial_accumulator_value=config.adagrad_init_acc)
-        # self.optimizer = optim.Adam(params, lr=config.adam_lr)
+        # self.optimizer = optim.Adagrad(params, lr=initial_lr, initial_accumulator_value=config.adagrad_init_acc)
+        self.optimizer = optim.Adam(params, lr=config.adam_lr)
         # 初始化迭代次数和损失
         start_iter, start_loss = 0, 0
         # 如果传入的已存在的模型路径，加载模型继续训练
@@ -76,11 +75,11 @@ class Train(object):
 
             if not config.is_coverage:
                 self.optimizer.load_state_dict(state['optimizer'])
-                if use_cuda:
+                if USE_CUDA:
                     for state in self.optimizer.state.values():
                         for k, v in state.items():
                             if torch.is_tensor(v):
-                                state[k] = v.cuda()
+                                state[k] = v.to(DEVICE)
 
         return start_iter, start_loss
 
@@ -93,16 +92,22 @@ class Train(object):
         enc_batch_extend_vocab:torch.Size([16, 400]), 16篇文章的编码;oov词汇用超过词汇表的编码；
         extra_zeros:           torch.Size([16, 文章oov词汇数量]) zero tensor;
         c_t_1:                 torch.Size([16, 512]) zero tensor;
-        coverage:              是否coverage。
+        coverage:              Variable(torch.zeros(batch_size, max_enc_seq_len)) if is_coverage==True else None;coverage模式时后续有值
         ----------------------------------------
-        
+        dec_batch:             torch.Size([16, 100]) 摘要编码含有开始符号编码以及PAD；
+        dec_padding_mask:      torch.Size([16, 100]) 对应pad的位置为0，其余为1；
+        max_dec_len:           标量，摘要词语数量，不包含pad
+        dec_lens_var:          torch.Size([16] 摘要词汇数量         
+        target_batch:          torch.Size([16, 100]) 目标摘要编码含有STOP符号编码以及PAD
         """
         enc_batch, enc_padding_mask, enc_lens, enc_batch_extend_vocab, extra_zeros, c_t_1, coverage = \
-            get_input_from_batch(batch, use_cuda)
+            get_input_from_batch(batch, USE_CUDA)
         dec_batch, dec_padding_mask, max_dec_len, dec_lens_var, target_batch = \
-            get_output_from_batch(batch, use_cuda)
+            get_output_from_batch(batch, USE_CUDA)
         self.optimizer.zero_grad()
         """
+        # 记得修改Batch类添加vocab属性
+ 
         print("模型输入文章编码:", "*"*100)
         print("enc_batch:", enc_batch, enc_batch.size())
         print("enc_batch[-1]:", enc_batch[-1])
@@ -123,38 +128,43 @@ class Train(object):
         print("-"*50)
         print("coverage:", coverage)
         print("*"*100)
-        """
+        
         print("模型输入摘要编码，包括源和目标：", "*"*100)
         print("dec_batch:", dec_batch, dec_batch.size())
-        print("dec_batch[-1]:", dec_batch[-1])
+        print("dec_batch[0]:", dec_batch[0])
         # print("batch._id_to_word:", batch.vocab._id_to_word)
-        print("dec_batch[-1]原文:", [batch.vocab.id2word(idx) for idx in dec_batch[-1].cpu().numpy()])
+        print("dec_batch[0]原文:", [batch.vocab.id2word(idx) for idx in dec_batch[0].cpu().numpy()])
         print("-"*50)
         print("dec_padding_mask:", dec_padding_mask, dec_padding_mask.size())
         print("-"*50)
         print("max_dec_len:", max_dec_len)
         print("-"*50)
-        print("dec_lens_var", dec_lens_var, type(dec_lens_var))
+        print("dec_lens_var", dec_lens_var, dec_lens_var.size())
         print("-"*50)
         print("target_batch:", target_batch, target_batch.size())
         print("-"*50)
-        print("target_batch[-1]:", target_batch[-1], target_batch[-1].size())
-        print("target_batch[-1]的原文:", [batch.vocab.id2word(idx) for idx in target_batch[-1].cpu().numpy()])
+        print("target_batch[0]:", target_batch[0], target_batch[0].size())
+        print("target_batch[0]的原文:", [batch.vocab.id2word(idx) if idx<50000 else '[UNK]+{}'.format(idx-50000) for idx in target_batch[0].cpu().numpy()])
         print("*"*100)
         input("任意键继续>>>")
+        """
+        # [B, max(seq_lens), 2*hid_dim], [B*max(seq_lens), 2*hid_dim], tuple([2, B, hid_dim], [2, B, hid_dim])
         encoder_outputs, encoder_feature, encoder_hidden = self.model.encoder(enc_batch, enc_lens)
-        # print("reduce_state 输入：", type(encoder_hidden), len(encoder_hidden), encoder_hidden[0].size())
-        s_t_1 = self.model.reduce_state(encoder_hidden)
+        s_t_1 = self.model.reduce_state(encoder_hidden)   # (h,c) = ([1, B, hid_dim], [1, B, hid_dim])
         step_losses = []
         for di in range(min(max_dec_len, config.max_dec_steps)):
-            y_t_1 = dec_batch[:, di]      # Teacher forcing
+            y_t_1 = dec_batch[:, di]      # 摘要的一个单词，batch里的每个句子的同一位置的单词编码
+            # print("y_t_1:", y_t_1, y_t_1.size())
             final_dist, s_t_1,  c_t_1, attn_dist, p_gen, next_coverage = self.model.decoder(y_t_1, s_t_1,
                                                         encoder_outputs, encoder_feature, enc_padding_mask, c_t_1,
-                                                        extra_zeros, enc_batch_extend_vocab,
-                                                                           coverage, di)
-            target = target_batch[:, di]
-            gold_probs = torch.gather(final_dist, 1, target.unsqueeze(1)).squeeze()
-            step_loss = -torch.log(gold_probs + config.eps)
+                                                        extra_zeros, enc_batch_extend_vocab, coverage, di)
+            target = target_batch[:, di]  # 摘要的下一个单词的编码
+            # print("target-iter:", target, target.size())
+            # print("final_dist:", final_dist, final_dist.size())
+            # input("go on>>")
+            # final_dist 是词汇表每个单词的概率，词汇表是扩展之后的词汇表，也就是大于预设的50_000
+            gold_probs = torch.gather(final_dist, 1, target.unsqueeze(1)).squeeze()   # 取出目标单词的概率gold_probs
+            step_loss = -torch.log(gold_probs + config.eps)  # 最大化gold_probs，也就是最小化step_loss（添加负号）
             if config.is_coverage:
                 step_coverage_loss = torch.sum(torch.min(attn_dist, coverage), 1)
                 step_loss = step_loss + config.cov_loss_wt * step_coverage_loss
@@ -197,9 +207,9 @@ class Train(object):
                 self.summary_writer.flush()
             # 每1000次迭代打印一次信息
             # print_interval = 1000
-            if iter_step % 1000 == 0:
+            if iter_step % 100 == 0:
                 # lr = self.optimizer.state_dict()['param_groups'][0]['lr']
-                print('steps %d, seconds for %d steps: %.2f, loss: %f' % (iter_step, 1000,
+                print('steps %d, seconds for %d steps: %.2f, loss: %f' % (iter_step, 100,
                                                                           time.time() - start, loss))
                 start = time.time()
             # 5000次迭代就保存一下模型

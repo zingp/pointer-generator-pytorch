@@ -27,7 +27,7 @@ class Example(object):
             article_words = article_words[:config.max_enc_steps]
         self.enc_len = len(article_words) # store the length after truncation but before padding
         # 编码 article，包括oov单词也得跟着编码
-        self.enc_input = [vocab.word2id(w) for w in article_words] 
+        self.enc_input = [vocab.word2id(w) for w in article_words]
         # 处理 abstract
         abstract = ' '.join(abstract_sentences)  # string
         abstract_words = abstract.split() # list of strings
@@ -86,16 +86,15 @@ class Example(object):
 class Batch(object):
     def __init__(self, example_list, vocab, batch_size):
         self.batch_size = batch_size
-        # self.vocab = vocab
-        self.pad_id = vocab.word2id(data.PAD_TOKEN) # PAD token的id
-        self.init_encoder_seq(example_list)         # initialize the input to the encoder
-        self.init_decoder_seq(example_list)         # initialize the input and targets for the decoder
-        self.store_orig_strings(example_list)       # store the original strings
+        # self.vocab = vocab               # 添加这个用来测试
+        self.pad_id = vocab.word2id(data.PAD_TOKEN) # id of the PAD token used to pad sequences
+        self.init_encoder_seq(example_list) # initialize the input to the encoder
+        self.init_decoder_seq(example_list) # initialize the input and targets for the decoder
+        self.store_orig_strings(example_list) # store the original strings
 
 
     def init_encoder_seq(self, example_list):
         # Determine the maximum length of the encoder input sequence in this batch
-        # print("example_list[0]:", example_list[0], type(example_list[0]))
         max_enc_seq_len = max([ex.enc_len for ex in example_list])
 
         # Pad the encoder input sequences up to the length of the longest sequence
@@ -225,10 +224,10 @@ class Batcher(object):
                     raise Exception("single_pass mode is off but the example generator is out of data; error.")
 
             abstract_sentences = [sent.strip() for sent in data.abstract2sents(abstract)] # 编码abstract
+            #print("abstract_sentences:", abstract_sentences)
             example = Example(article, abstract_sentences, self._vocab)  # 处理成一个Example.
             self._example_queue.put(example)  # 放处理成一个Example对象至example queue.
             """
-            # debug
             print("*****Example*****")
             print("="*100)
             print("Article", example.original_article, type(example.original_article))
@@ -291,7 +290,6 @@ class Batcher(object):
 
     def text_generator(self, example_generator):
         while True:
-            # print("type:example generator:", example_generator, type(example_generator))
             e = example_generator.__next__()     # e 是一个 tf.Example对象
             try:
                 article_text = e.features.feature['article'].bytes_list.value[0] # the article text was saved under the key 'article' in the data files
