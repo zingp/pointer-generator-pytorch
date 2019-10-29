@@ -1,18 +1,18 @@
 import os
 import time
 import sys
-
-import tensorflow as tf
 import torch
+import tensorflow as tf
 
 import config
-from config import USE_CUDA, DEVICE
-from batcher import Batcher
 from data import Vocab
-
-from utils import calc_running_avg_loss
-from train_util import get_input_from_batch, get_output_from_batch
 from model import Model
+from config import USE_CUDA, DEVICE
+from utils import calc_running_avg_loss
+from batcher import Batcher
+from batcher import get_input_from_batch 
+from batcher import get_output_from_batch
+
 
 class Evaluate(object):
     def __init__(self, model_file_path):
@@ -31,9 +31,9 @@ class Evaluate(object):
 
     def eval_one_batch(self, batch):
         enc_batch, enc_padding_mask, enc_lens, enc_batch_extend_vocab, extra_zeros, c_t_1, coverage = \
-            get_input_from_batch(batch, USE_CUDA)
+            get_input_from_batch(batch)
         dec_batch, dec_padding_mask, max_dec_len, dec_lens_var, target_batch = \
-            get_output_from_batch(batch, USE_CUDA)
+            get_output_from_batch(batch)
 
         encoder_outputs, encoder_feature, encoder_hidden = self.model.encoder(enc_batch, enc_lens)
         s_t_1 = self.model.reduce_state(encoder_hidden)
@@ -66,9 +66,6 @@ class Evaluate(object):
         running_avg_loss, iter_step = 0, 0
         start = time.time()
         batch = self.batcher.next_batch()
-        # print(batch.original_articles)
-        # print(batch.original_abstracts)
-        # print(batch.original_abstracts_sents)
         while batch is not None:
             loss = self.eval_one_batch(batch)
 
@@ -86,8 +83,8 @@ class Evaluate(object):
 
 
 if __name__ == '__main__':
-    model_filename = sys.argv[1]
-    eval_processor = Evaluate(model_filename)
+    model_path = sys.argv[1]
+    eval_processor = Evaluate(model_path)
     eval_processor.run_eval()
 
 

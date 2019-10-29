@@ -1,5 +1,6 @@
 import os
 import torch
+from numpy import random
 # root_dir = "/search/odin/liuyouyuan/pyproject/data/finished_files"
 root_dir = "/search/odin/liuyouyuan/pyproject/data/weibo/finished_files"
 train_data_path = os.path.join(root_dir, "chunked/train_*")
@@ -40,7 +41,13 @@ max_iterations = 500_000
 lr_coverage=0.15
 
 # 使用GPU相关
-use_gpu=True
+use_gpu = True
 USE_CUDA = use_gpu and torch.cuda.is_available()     # 是否使用GPU
 NUM_CUDA = torch.cuda.device_count()
 DEVICE = torch.device("cuda:2" if USE_CUDA else 'cpu')
+
+SEED = 1234
+random.seed(SEED)
+torch.manual_seed(SEED)
+if USE_CUDA:
+    torch.cuda.manual_seed_all(SEED)

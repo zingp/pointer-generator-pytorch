@@ -16,11 +16,12 @@ from torch.nn.utils import clip_grad_norm_
 import torch.optim as optim
 
 import config
-from config import USE_CUDA, DEVICE
-from batcher import Batcher
 from data import Vocab
 from utils import calc_running_avg_loss
-from train_util import get_input_from_batch, get_output_from_batch
+from config import USE_CUDA, DEVICE
+from batcher import Batcher
+from batcher import get_input_from_batch
+from batcher import get_output_from_batch
 
 
 class Train(object):
@@ -101,9 +102,9 @@ class Train(object):
         target_batch:          torch.Size([16, 100]) 目标摘要编码含有STOP符号编码以及PAD
         """
         enc_batch, enc_padding_mask, enc_lens, enc_batch_extend_vocab, extra_zeros, c_t_1, coverage = \
-            get_input_from_batch(batch, USE_CUDA)
+            get_input_from_batch(batch)
         dec_batch, dec_padding_mask, max_dec_len, dec_lens_var, target_batch = \
-            get_output_from_batch(batch, USE_CUDA)
+            get_output_from_batch(batch)
         self.optimizer.zero_grad()
         """
         # 记得修改Batch类添加vocab属性
@@ -219,11 +220,11 @@ class Train(object):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Train script")
     parser.add_argument("-m",
-                        dest="model_file_path", 
+                        dest="model_path", 
                         required=False,
                         default=None,
                         help="Model file for retraining (default: None).")
     args = parser.parse_args()
     
     train_processor = Train()
-    train_processor.trainIters(config.max_iterations, args.model_file_path)
+    train_processor.trainIters(config.max_iterations, args.model_path)

@@ -4,17 +4,16 @@ decode阶段使用 beam search 算法
 import os
 import sys
 import time
-
 import torch
 from torch.autograd import Variable
 
-import data, config
-from config import USE_CUDA, DEVICE
-from batcher import Batcher
+import data
+import config
 from data import Vocab
 from model import Model
+from config import USE_CUDA, DEVICE
+from batcher import Batcher, get_input_from_batch
 from utils import write_for_rouge, rouge_eval, rouge_log
-from train_util import get_input_from_batch
 
 
 class Beam(object):
@@ -103,7 +102,7 @@ class BeamSearch(object):
     def beam_search(self, batch):
         # batch should have only one example
         enc_batch, enc_padding_mask, enc_lens, enc_batch_extend_vocab, extra_zeros, c_t_0, coverage_t_0 = \
-            get_input_from_batch(batch, USE_CUDA)
+            get_input_from_batch(batch)
 
         encoder_outputs, encoder_feature, encoder_hidden = self.model.encoder(enc_batch, enc_lens)
         s_t_0 = self.model.reduce_state(encoder_hidden)
@@ -196,8 +195,8 @@ class BeamSearch(object):
         return beams_sorted[0]
 
 if __name__ == '__main__':
-    model_filename = sys.argv[1]
-    beam_Search_processor = BeamSearch(model_filename)
-    beam_Search_processor.decode()
+    model_path = sys.argv[1]
+    beam_processor = BeamSearch(model_path)
+    beam_processor.decode()
 
 

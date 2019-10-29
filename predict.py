@@ -17,11 +17,11 @@ from torch.autograd import Variable
 
 import data, config
 from config import USE_CUDA, DEVICE
-from batcher import Example
-from batcher import Batch
 from data import Vocab
 from model import Model
-from train_util import get_input_from_batch
+from batcher import Example
+from batcher import Batch
+from batcher import get_input_from_batch
 
 def build_batch_by_article(article, vocab):
     words = jieba.cut(article)
@@ -88,7 +88,7 @@ class BeamSearch(object):
     def beam_search(self, batch):
         # batch should have only one example
         enc_batch, enc_padding_mask, enc_lens, enc_batch_extend_vocab, extra_zeros, c_t_0, coverage_t_0 = \
-            get_input_from_batch(batch, USE_CUDA)
+            get_input_from_batch(batch)
 
         encoder_outputs, encoder_feature, encoder_hidden = self.model.encoder(enc_batch, enc_lens)
         s_t_0 = self.model.reduce_state(encoder_hidden)
