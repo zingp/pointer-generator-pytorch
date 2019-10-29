@@ -22,8 +22,8 @@ def build_batch_by_article(article, vocab):
     words = jieba.cut(article)
     art_str = " ".join(words)
     example = Example(art_str, ["",], vocab)
-    ex_list = [example for _ in range(config.batch_size)]
-    batch  = Batch(ex_list, vocab, config.batch_size)
+    ex_list = [example for _ in range(config.beam_size)]
+    batch  = Batch(ex_list, vocab, config.beam_size)
     return batch
 
 
@@ -224,7 +224,7 @@ class BeamSearch(object):
         return beams_sorted[0]
 
 if __name__ == '__main__':
-    article = ""
+    article = "近日，一段消防员用叉子吃饭的视频在网上引起热议。原来是因为训练强度太大，半天下来，大家拿筷子的手一直在抖，甚至没法夹菜。于是，用叉子吃饭，渐渐成了上海黄浦消防车站中队饭桌上的传统。转发，向消防员致敬！"
     model_filename = sys.argv[1]
     
     vocab = Vocab(config.vocab_path, config.vocab_size)
