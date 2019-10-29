@@ -88,6 +88,7 @@ def write_for_rouge(reference_sents, decoded_words, ex_index,
         for idx, sent in enumerate(decoded_sents):
             f.write(sent) if idx == len(decoded_sents) - 1 else f.write(sent + "\n")
 
+
 if __name__ == '__main__':
     dec_rootdir = "/root/liuyouyuan/pyproject/pointer-generator-pytorch/log/decode_model_500000_20191012_193905"
     ref_dir, dec_dir = os.path.join(dec_rootdir,"rouge_ref"), os.path.join(dec_rootdir, "rouge_dec_dir")

@@ -30,8 +30,8 @@ class Train(object):
         self.batcher = Batcher(config.train_data_path, self.vocab, mode='train',
                                batch_size=config.batch_size, single_pass=False)
         time.sleep(15)
-
-        train_dir = os.path.join(config.log_root, 'train_%d' % (int(time.time())))
+        stamp = time.strftime("%Y%m%d_%H%M%S", time.localtime())
+        train_dir = os.path.join(config.log_root, 'train_{}'.format(stamp))
         if not os.path.exists(train_dir):
             os.mkdir(train_dir)
 
@@ -51,7 +51,7 @@ class Train(object):
             'optimizer': self.optimizer.state_dict(),
             'current_loss': running_avg_loss
         }
-        stamp = time.strftime("%Y%m%d_%H%M%S",time.localtime()) 
+        stamp = time.strftime("%Y%m%d_%H%M%S", time.localtime()) 
         model_save_path = os.path.join(self.model_dir, 'model_{}_{}'.format(iter_step, stamp))
         torch.save(state, model_save_path)
 
@@ -70,7 +70,7 @@ class Train(object):
         start_iter, start_loss = 0, 0
         # 如果传入的已存在的模型路径，加载模型继续训练
         if model_file_path is not None:
-            state = torch.load(model_file_path, map_location= lambda storage, location: storage)
+            state = torch.load(model_file_path, map_location = lambda storage, location: storage)
             start_iter = state['iter']
             start_loss = state['current_loss']
 
@@ -196,9 +196,6 @@ class Train(object):
         while iter_step < n_iters:
             # 获取下一个batch数据
             batch = self.batcher.next_batch()
-            #print("batch:", "*"*30)
-            #print("enc_batch", batch.enc_batch)
-            #print("enc_padding_mask", batch.enc_padding_mask)
             loss = self.train_one_batch(batch)
 
             running_avg_loss = calc_running_avg_loss(loss, running_avg_loss, self.summary_writer, iter_step)
@@ -206,7 +203,7 @@ class Train(object):
 
             if iter_step % 100 == 0:
                 self.summary_writer.flush()
-            # 每1000次迭代打印一次信息
+            
             # print_interval = 1000
             if iter_step % 1000 == 0:
                 # lr = self.optimizer.state_dict()['param_groups'][0]['lr']
@@ -217,6 +214,14 @@ class Train(object):
             if iter_step % 5000 == 0:
                 self.save_model(running_avg_loss, iter_step)
 
+def init_print():
+    stamp = time.strftime("%Y%m%d_%H%M%S", time.localtime())
+    print("时间:{}".format(stamp))
+    print("***参数:***")
+    for k, v in config.__dict__.items():
+        if not k.startswith("__"):
+            print(":".join([k, v]))
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Train script")
     parser.add_argument("-m",
@@ -225,6 +230,6 @@ if __name__ == '__main__':
                         default=None,
                         help="Model file for retraining (default: None).")
     args = parser.parse_args()
-    
+    init_print()
     train_processor = Train()
     train_processor.trainIters(config.max_iterations, args.model_path)

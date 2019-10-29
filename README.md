@@ -1,5 +1,8 @@
-# pointer-generator-pytorch
-implementation pointer-generator-network by pytorch and python3
+# pointer-generator-pytorch指针生成网络pytorch实现
+- 用于文本摘要任务
 
-# tf.summary.FileWriter(yourdir)
-# tensorboard --logdir yourdir 可视化
+# 数据集
+- cnn/dailymail 
+- 新浪微博中文数据集
+
+# 
