@@ -1,6 +1,12 @@
-# 分词
-# 变成example
-# 处理成batch对象
+"""
+预处理：构建一个Batch对象
+    1 首先得到article的分词
+    构建一个example Example(art_str, ["",], vocab)
+        art_str 是分词后用空格连起来的字符串
+        Example的第二个参数是abstract的分词空格连接在一起的各个句子列表[句子1，句子2.。。]
+    2 构建一个Batch
+    [ex1,ex2...] + vocab + bach_size 构建一个Batch
+"""
 import jieba
 import os
 import sys
@@ -15,7 +21,6 @@ from batcher import Example
 from batcher import Batch
 from data import Vocab
 from model import Model
-from utils import write_for_rouge, rouge_eval, rouge_log
 from train_util import get_input_from_batch
 
 def build_batch_by_article(article, vocab):
@@ -25,8 +30,6 @@ def build_batch_by_article(article, vocab):
     ex_list = [example for _ in range(config.beam_size)]
     batch  = Batch(ex_list, vocab, config.beam_size)
     return batch
-
-
 
 """
 decode阶段使用 beam search 算法
@@ -57,45 +60,14 @@ class Beam(object):
 
 class BeamSearch(object):
     def __init__(self, model_file_path, vocab):
-        # model_name = os.path.basename(model_file_path)
-        # 这里没必要创建三个目录
-        # self._decode_dir = os.path.join(config.log_root, 'decode_%s' % (model_name))
-        # self._rouge_ref_dir = os.path.join(self._decode_dir, 'rouge_ref')
-        # self._rouge_dec_dir = os.path.join(self._decode_dir, 'rouge_dec_dir')
-        # # 创建3个目录
-        # for p in [self._decode_dir, self._rouge_ref_dir, self._rouge_dec_dir]:
-        #     if not os.path.exists(p):
-        #         os.mkdir(p)
-        
-        # 1 构建词表
         self.vocab = vocab
-        # 2 如何构建一个bathher
-        # self.batcher = Batcher(config.decode_data_path, self.vocab, mode='decode',
-        #                        batch_size=config.beam_size, single_pass=True)
-        # time.sleep(15)
-
-        # 3 加载模型
+        # 加载模型
         self.model = Model(model_file_path, is_eval=True)
 
     def sort_beams(self, beams):
         return sorted(beams, key=lambda h: h.avg_log_prob, reverse=True)
 
-
     def decode(self, batch):
-        # start = time.time()
-        # counter = 0
-        # 4 得到一个Batch对象， 只要能构建一个Batch对象应该就行
-        # 首先得到article 与abstract的分词？
-        # 构建一个example
-        # [ex1,ex2...] + vocab + bach_size 构建一个Batch
-
-        # 如何构建一个exp
-        # 分词后的后的article 用空格连在一起
-        # 分词后的摘要句子列表[句子1，句子2.。。]，decode时候应该是什么？
-
-        # batch = self.batcher.next_batch()
-        # while batch is not None:
-        # Run beam search to get best Hypothesis
         best_summary = self.beam_search(batch)
 
         # Extract the output ids from the hypothesis and convert back to words
@@ -110,22 +82,7 @@ class BeamSearch(object):
         except ValueError:
             decoded_words = decoded_words
         print("decode_words:", decoded_words)
-
-        # original_abstract_sents = batch.original_abstracts_sents[0]
-
-        # write_for_rouge(original_abstract_sents, decoded_words, counter,
-        #                 self._rouge_ref_dir, self._rouge_dec_dir)
-        # counter += 1
-        # if counter % 1000 == 0:
-        #     print('%d example in %d sec'%(counter, time.time() - start))
-        #     start = time.time()
-
-        # batch = self.batcher.next_batch()
-
-        # print("Decoder has finished reading dataset for single_pass.")
-        # print("Now starting ROUGE eval...")
-        # results_dict = rouge_eval(self._rouge_ref_dir, self._rouge_dec_dir)
-        # rouge_log(results_dict, self._decode_dir)
+        return "".join(decoded_words)
 
 
     def beam_search(self, batch):
@@ -231,5 +188,3 @@ if __name__ == '__main__':
     batch = build_batch_by_article(article, vocab)
     beam_processor = BeamSearch(model_filename, vocab)
     beam_processor.decode(batch)
-
-
