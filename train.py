@@ -220,7 +220,7 @@ def init_print():
     print("***参数:***")
     for k, v in config.__dict__.items():
         if not k.startswith("__"):
-            print(":".join([k, v]))
+            print(":".join([k, str(v)]))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Train script")
