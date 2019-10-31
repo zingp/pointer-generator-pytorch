@@ -12,7 +12,7 @@ from data import Vocab
 from predict import build_batch_by_article
 from predict import BeamSearch
 
-model_path = ""
+model_path = "./logs/weibo/train_20191030_005155/model/model_510000_20191030_014457"
 vocab = Vocab(config.vocab_path, config.vocab_size)
 beam_processor = BeamSearch(model_path, vocab)
 
