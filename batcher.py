@@ -318,9 +318,9 @@ def get_input_from_batch(batch):
 
     if config.pointer_gen:
         enc_batch_extend_vocab = Variable(torch.from_numpy(batch.enc_batch_extend_vocab).long())
-    # max_art_oovs is the max over all the article oov list in the batch
-    if batch.max_art_oovs > 0:
-        extra_zeros = Variable(torch.zeros((batch_size, batch.max_art_oovs)))
+        # max_art_oovs is the max over all the article oov list in the batch
+        if batch.max_art_oovs > 0:
+            extra_zeros = Variable(torch.zeros((batch_size, batch.max_art_oovs)))
 
     c_t_1 = Variable(torch.zeros((batch_size, 2 * config.hidden_dim)))
 

@@ -31,8 +31,9 @@ trunc_norm_init_std = 1e-4
 max_grad_norm = 2.0
 
 pointer_gen = True
-is_coverage = True
-#is_coverage = False
+#pointer_gen = False
+#is_coverage = True
+is_coverage = False
 cov_loss_wt = 1.0
 
 eps = 1e-12
@@ -42,7 +43,7 @@ lr_coverage=0.15
 
 # 使用GPU相关
 use_gpu = True
-GPU = "cuda:2"
+GPU = "cuda:0"
 USE_CUDA = use_gpu and torch.cuda.is_available()     # 是否使用GPU
 NUM_CUDA = torch.cuda.device_count()
 DEVICE = torch.device(GPU if USE_CUDA else 'cpu')

@@ -28,7 +28,7 @@ class AbstractView(views.MethodView):
     def post(self):
         ret = {"status":True, "error": None, "abstract":""}
         art = request.form.get("article")
-        print("原文：", art)
+        #print("原文：", art)
         start = time.time()
         try:
             batch = build_batch_by_article(art, vocab)
@@ -39,8 +39,8 @@ class AbstractView(views.MethodView):
             ret["status"] = False
         
         end = time.time()
-        print("time:", end-start)
-        print("摘要：", abstract)
+        #print("time:", end-start)
+        #print("摘要：", abstract)
         return json.dumps(ret)
  
 app.add_url_rule('/abstract.html', view_func=AbstractView.as_view(name='abstract'))
