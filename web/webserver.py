@@ -1,5 +1,10 @@
 #! -*- coding: utf-8 -*-
 import os
+import sys
+# 添加project目录至环境变量
+base_dir = os.path.abspath(os.path.abspath(os.path.dirname(__file__)))
+print(base_dir)
+sys.path.append(base_dir)
 import time
 import json
 from flask import views

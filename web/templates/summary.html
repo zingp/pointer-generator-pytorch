@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Web Summary</title>
+    <link rel="stylesheet" href="../static/css/summary.css" />
+</head>
+
+<body>
+    <div id="page-header">文本摘要系统</div>
+    <div id="body">
+        <form name="art-form"  method="post">
+            <div id="form-text">文本：
+                <textarea class="art" id="art-cont" name="article"></textarea>
+            </div>
+            <div id="form-bt">
+                    <input id="art-sub" type="button" name="提交" value="提 交">
+                    <input type="reset" name="重写" value="重 写">
+            </div>
+        </form>
+    <div id="summary">摘要： 
+        <textarea class="abs" id="abs-cont" name="abstract"></textarea>
+    </div>
+    </div>
+
+        <script type="text/javascript" src="../static/js/jquery-1.12.4.js"></script>
+        <script type="text/javascript" src="../static/js/summary.js"></script>
+</body>
+
+</html>

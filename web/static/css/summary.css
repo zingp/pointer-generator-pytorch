@@ -1,0 +1,34 @@
+#page-header {
+    width: 100%;
+    height: 50px;
+    line-height: 50px;
+    background-color: #323436;
+    color: aliceblue;
+    text-align: center;
+    
+}
+#body {
+    margin-top:5px;
+    width: 80% 0 auto;
+    text-align: center;
+    /* border: 1px solid red; */
+}
+.art {
+    width: 800px;
+    height: 180px;
+}
+#form-text {
+    width: 100% auto;
+    /* border: 1px solid gray; */
+}
+
+#summary {
+    width: 100%;
+    height: 250px;
+    margin-top: 50px;
+    text-align: center;
+}
+.abs {
+    width: 800px;
+    height: 80px;
+}
