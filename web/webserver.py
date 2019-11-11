@@ -2,7 +2,7 @@
 import os
 import sys
 # 添加project目录至环境变量
-base_dir = os.path.abspath(os.path.abspath(os.path.dirname(__file__)))
+base_dir = os.path.dirname(os.path.abspath((os.path.dirname(__file__))))
 print(base_dir)
 sys.path.append(base_dir)
 import time
@@ -17,7 +17,7 @@ from data import Vocab
 from predict import build_batch_by_article
 from predict import BeamSearch
 
-model_path = "./logs/weibo/train_20191030_005155/model/model_510000_20191030_014457"
+model_path = "../logs/weibo/train_20191030_005155/model/model_510000_20191030_014457"
 vocab = Vocab(config.vocab_path, config.vocab_size)
 beam_processor = BeamSearch(model_path, vocab)
 
