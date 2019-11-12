@@ -62,10 +62,8 @@ class Train(object):
         # 模型参数的列表
         params = list(self.model.encoder.parameters()) + list(self.model.decoder.parameters()) + \
                  list(self.model.reduce_state.parameters())
-        initial_lr = config.lr_coverage if config.is_coverage else config.lr
         # 定义优化器
-        self.optimizer = optim.Adagrad(params, lr=initial_lr, initial_accumulator_value=config.adagrad_init_acc)
-        # self.optimizer = optim.Adam(params, lr=config.adam_lr)
+        self.optimizer = optim.Adam(params, lr=config.adam_lr)
         # 初始化迭代次数和损失
         start_iter, start_loss = 0, 0
         # 如果传入的已存在的模型路径，加载模型继续训练
