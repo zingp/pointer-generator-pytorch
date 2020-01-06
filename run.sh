@@ -9,3 +9,5 @@ nohup python train.py -m weibo_log/train_1570973725/model/model_495000_20191014_
 nohup python train.py >logs/log_gen_nocover_adam.log 2>&1 &
 
 nohup python train.py -m logs/weibo_adam/train_20200105_094159/model/model_490000_20200105_165432 >logs/log_gen_cover.log 2>&1 &
+
+nohup python decode.py logs/weibo_adam/train_20200106_110339/model/model_494000_20200106_110724 >logs/log_gen_cover_494_dec.log 2>&1 &
