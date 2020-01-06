@@ -8,7 +8,7 @@ import struct
 import collections
 from tensorflow.core.example import example_pb2
 
-DATA_ROOT = "./weibo"
+DATA_ROOT = "../weibo"
 
 # 文本起始与结束标志
 SENTENCE_START = '<s>'
