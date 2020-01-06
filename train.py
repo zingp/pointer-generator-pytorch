@@ -22,6 +22,7 @@ from config import USE_CUDA, DEVICE
 from batcher import Batcher
 from batcher import get_input_from_batch
 from batcher import get_output_from_batch
+from adagrad_custom import AdagradCustom
 
 
 class Train(object):
@@ -63,7 +64,10 @@ class Train(object):
         params = list(self.model.encoder.parameters()) + list(self.model.decoder.parameters()) + \
                  list(self.model.reduce_state.parameters())
         # 定义优化器
-        self.optimizer = optim.Adam(params, lr=config.adam_lr)
+        # self.optimizer = optim.Adam(params, lr=config.adam_lr)
+        # 使用AdagradCustom做优化器
+        initial_lr = config.lr_coverage if config.is_coverage else config.lr
+        self.optimizer = AdagradCustom(params, lr=initial_lr, initial_accumulator_value=config.adagrad_init_acc)
         # 初始化迭代次数和损失
         start_iter, start_loss = 0, 0
         # 如果传入的已存在的模型路径，加载模型继续训练
@@ -209,7 +213,7 @@ class Train(object):
                                                                           time.time() - start, loss))
                 start = time.time()
             # 5000次迭代就保存一下模型
-            if iter_step % 1000 == 0:
+            if iter_step % 5000 == 0:
                 self.save_model(running_avg_loss, iter_step)
 
 def init_print():

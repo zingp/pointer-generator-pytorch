@@ -5,28 +5,41 @@ from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 import config
 from config import USE_CUDA, DEVICE
 
-# 权重初始化，默认xavier
-def init_network(model, method='xavier', seed=123):
-    for name, w in model.named_parameters():
-        # if exclude not in name:
-        if 'weight' in name:
-            if method == 'xavier':
-                nn.init.xavier_normal_(w)
-            elif method == 'kaiming':
-                nn.init.kaiming_normal_(w)
-            else:
-                nn.init.normal_(w)
-        elif 'bias' in name:
-            nn.init.constant_(w, 0)
-        else:
-            pass
+
+def init_lstm_wt(lstm):
+    for names in lstm._all_weights:
+        for name in names:
+            if name.startswith('weight_'):
+                wt = getattr(lstm, name)
+                wt.data.uniform_(-config.rand_unif_init_mag, config.rand_unif_init_mag)
+            elif name.startswith('bias_'):
+                # set forget bias to 1
+                bias = getattr(lstm, name)
+                n = bias.size(0)
+                start, end = n // 4, n // 2
+                bias.data.fill_(0.)
+                bias.data[start:end].fill_(1.)
+
+def init_linear_wt(linear):
+    linear.weight.data.normal_(std=config.trunc_norm_init_std)
+    if linear.bias is not None:
+        linear.bias.data.normal_(std=config.trunc_norm_init_std)
+
+def init_wt_normal(wt):
+    wt.data.normal_(std=config.trunc_norm_init_std)
+
+def init_wt_unif(wt):
+    wt.data.uniform_(-config.rand_unif_init_mag, config.rand_unif_init_mag)
 
 class Encoder(nn.Module):
     def __init__(self):
         super(Encoder, self).__init__()
         self.embedding = nn.Embedding(config.vocab_size, config.emb_dim)
-        self.lstm = nn.LSTM(config.emb_dim, config.hidden_dim, num_layers=1,
-                            batch_first=True, bidirectional=True)
+        init_wt_normal(self.embedding.weight)
+
+        self.lstm = nn.LSTM(config.emb_dim, config.hidden_dim, num_layers=1, batch_first=True, bidirectional=True)
+        init_lstm_wt(self.lstm)
+
         self.W_h = nn.Linear(config.hidden_dim * 2, config.hidden_dim * 2, bias=False)
 
     # seq_lens: 1D tensor 应该降序排列
@@ -47,8 +60,11 @@ class Encoder(nn.Module):
 class ReduceState(nn.Module):
     def __init__(self):
         super(ReduceState, self).__init__()
+
         self.reduce_h = nn.Linear(config.hidden_dim * 2, config.hidden_dim)
+        init_linear_wt(self.reduce_h)
         self.reduce_c = nn.Linear(config.hidden_dim * 2, config.hidden_dim)
+        init_linear_wt(self.reduce_c)
 
     def forward(self, hidden):
         h, c = hidden    # h, c dim = [2, batch, hidden_dim]
@@ -107,15 +123,20 @@ class Decoder(nn.Module):
         self.attention_network = Attention()
         # decoder
         self.embedding = nn.Embedding(config.vocab_size, config.emb_dim)
+        init_wt_normal(self.embedding.weight)
+
         self.x_context = nn.Linear(config.hidden_dim * 2 + config.emb_dim, config.emb_dim)
+
         self.lstm = nn.LSTM(config.emb_dim, config.hidden_dim, num_layers=1, batch_first=True, bidirectional=False)
-        
+        init_lstm_wt(self.lstm)
+
         if config.pointer_gen:
             self.p_gen_linear = nn.Linear(config.hidden_dim * 4 + config.emb_dim, 1)
 
         #p_vocab
         self.out1 = nn.Linear(config.hidden_dim * 3, config.hidden_dim)
         self.out2 = nn.Linear(config.hidden_dim, config.vocab_size)
+        init_linear_wt(self.out2)
 
     def forward(self, y_t_1, s_t_1, encoder_outputs, encoder_feature, enc_padding_mask,
                 c_t_1, extra_zeros, enc_batch_extend_vocab, coverage, step):
@@ -150,6 +171,9 @@ class Decoder(nn.Module):
 
         output = torch.cat((lstm_out.view(-1, config.hidden_dim), c_t), 1) # B x hidden_dim * 3
         output = self.out1(output) # B x hidden_dim
+
+        #output = F.relu(output)
+
         output = self.out2(output) # B x vocab_size
         vocab_dist = F.softmax(output, dim=1)
 
@@ -171,11 +195,8 @@ class Model(object):
         encoder = Encoder()
         decoder = Decoder()
         reduce_state = ReduceState()
-        # 参数初始化
-        for model in [encoder, decoder, reduce_state]:
-            init_network(model)
 
-        # decoder与encoder参数共享
+        # shared the embedding between encoder and decoder
         decoder.embedding.weight = encoder.embedding.weight
         if is_eval:
             encoder = encoder.eval()
@@ -186,7 +207,10 @@ class Model(object):
             encoder = encoder.to(DEVICE)
             decoder = decoder.to(DEVICE)
             reduce_state = reduce_state.to(DEVICE)
-
+        #if NUM_CUDA > 1:
+        #    encoder = nn.DataParallel(encoder)
+        #    decoder = nn.DataParallel(decoder)
+        #    reduce_state = nn.DataParallel(reduce_state)
         self.encoder = encoder
         self.decoder = decoder
         self.reduce_state = reduce_state
