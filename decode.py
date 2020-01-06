@@ -54,7 +54,7 @@ class BeamSearch(object):
         self.vocab = Vocab(config.vocab_path, config.vocab_size)
         self.batcher = Batcher(config.decode_data_path, self.vocab, mode='decode',
                                batch_size=config.beam_size, single_pass=True)
-        time.sleep(15)
+        time.sleep(5)
 
         self.model = Model(model_file_path, is_eval=True)
 
@@ -94,9 +94,9 @@ class BeamSearch(object):
             batch = self.batcher.next_batch()
 
         print("Decoder has finished reading dataset for single_pass.")
-        print("Now starting ROUGE eval...")
-        results_dict = rouge_eval(self._rouge_ref_dir, self._rouge_dec_dir)
-        rouge_log(results_dict, self._decode_dir)
+        # print("Now starting ROUGE eval...")
+        # results_dict = rouge_eval(self._rouge_ref_dir, self._rouge_dec_dir)
+        # rouge_log(results_dict, self._decode_dir)
 
 
     def beam_search(self, batch):
