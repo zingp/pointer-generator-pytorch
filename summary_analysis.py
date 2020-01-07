@@ -18,8 +18,8 @@ def print_summary(ref_dir, dec_dir):
         ref_cont = load_word_sents(ref_file)
         n += 1
         print("参考摘要：", ref_cont)
-        print("生成摘要：", "\033[36;1m{}\033[0m".format(dec_cont))
-        print("- - "*50)
+        print("\033[36;1m生成摘要：\033[0m", dec_cont)
+        print("- "*50)
         if n == 1000:
             print("已经输出1000条")
             break
