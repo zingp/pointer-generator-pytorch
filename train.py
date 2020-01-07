@@ -213,7 +213,7 @@ class Train(object):
                                                                           time.time() - start, loss))
                 start = time.time()
             # 5000次迭代就保存一下模型
-            if iter_step % 5000 == 0:
+            if iter_step % 1000 == 0:
                 self.save_model(running_avg_loss, iter_step)
 
 def init_print():

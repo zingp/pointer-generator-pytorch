@@ -27,3 +27,27 @@ ROUGE-2 : 0.234
  'rouge_l/p_score': 0.23396664295893074,
  'rouge_l/r_score': 0.23396664295893074}
 """
+
+
+# 20200106 20:29
+nohup python train.py >logs/log_gen_nocover_adagrad.log 2>&1 &
+
+nohup python train.py -m logs/weibo_adagrad/train_20200106_202839/model/model_700000_20200107_062401 >logs/log_gen_cover_adagrad.log 2>&1 &
+
+nohup python decode.py logs/weibo_adagrad/train_20200107_093425/model/model_704000_20200107_093803 >log_gen_cover_adagrad_704_dec.log 2>&1 &
+
+"""
+(pt-tf-env) [dc@gz_6237_gpu pointer-generator-pytorch]$ python rouge_zh.py
+ROUGE-1 : 0.4745
+ROUGE-2 : 0.2187
+(pt-tf-env) [dc@gz_6237_gpu pointer-generator-pytorch]$ python rouge.py
+{'rouge_1/f_score': 0.22685453430889232,
+ 'rouge_1/p_score': 0.22685453544319967,
+ 'rouge_1/r_score': 0.22685453544319967,
+ 'rouge_2/f_score': 0.1545234846036691,
+ 'rouge_2/p_score': 0.15452348537630375,
+ 'rouge_2/r_score': 0.15452348537630375,
+ 'rouge_l/f_score': 0.22685453544311474,
+ 'rouge_l/p_score': 0.22685453544319967,
+ 'rouge_l/r_score': 0.22685453544319967}
+"""

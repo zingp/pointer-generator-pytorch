@@ -53,7 +53,8 @@ def avg_rouge(ref_dir, dec_dir, n):
 
 
 if __name__ == "__main__":
-    root_dir = "./logs/weibo_adam/decode_model_494000_20200106_110724"
+    #root_dir = "./logs/weibo_adam/decode_model_494000_20200106_110724"
+    root_dir = "./logs/weibo_adagrad/decode_model_704000_20200107_093803"
     ref_dir = os.path.join(root_dir, "rouge_ref")
     dec_dir = os.path.join(root_dir, "rouge_dec_dir")
     for i in range(1,3):
